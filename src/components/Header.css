@@ -21,16 +21,12 @@
   width: 40px;
   height: 40px;
   background: var(--bg-elevated);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-default);
-}
-
-.logo-icon svg {
-  width: 22px;
-  height: 22px;
+  color: var(--accent-primary);
 }
 
 .brand-text {
@@ -51,9 +47,9 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--accent-primary);
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(34, 211, 238, 0.1);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .header-controls {
@@ -77,78 +73,13 @@
   padding: 6px 12px;
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 10px;
-}
-
-.sync-status.blofin {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.2);
-}
-
-.sync-status.blofin .sync-dot {
-  background: var(--accent-primary);
-}
-
-.sync-status.blofin .sync-text {
-  color: var(--accent-primary);
-}
-
-.sync-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-success);
-  animation: pulse 2s infinite;
+  border-radius: var(--radius-md);
+  color: var(--color-success);
 }
 
 .sync-text {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-success);
-}
-
-.sync-btn,
-.import-btn {
-  background: transparent;
-  border: none;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  opacity: 0.7;
-  transition: all 0.2s ease;
-}
-
-.sync-btn:hover,
-.import-btn:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.sync-btn:disabled,
-.import-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.connect-blofin-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
-  color: var(--accent-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.connect-blofin-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent-primary);
 }
 
 /* Settings Button */
@@ -157,19 +88,19 @@
   height: 40px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
-  border-radius: 10px;
-  font-size: 1.1rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
 }
 
 .settings-btn:hover {
   background: var(--bg-hover);
   border-color: var(--accent-primary);
-  transform: rotate(45deg);
+  color: var(--accent-primary);
 }
 
 /* Config Boxes */
@@ -180,7 +111,7 @@
   gap: 12px;
   background: var(--bg-elevated);
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
 }
 
@@ -205,8 +136,8 @@
   border: none;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
 }
 
 .value-btn:hover {
@@ -237,7 +168,7 @@
 
 /* R value specific */
 .r-amount {
-  color: var(--accent-cyan);
+  color: var(--accent-primary);
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.1rem;
   font-weight: 700;
@@ -257,7 +188,7 @@
 }
 
 .value-edit .currency {
-  color: var(--accent-cyan);
+  color: var(--accent-primary);
   font-family: 'JetBrains Mono', monospace;
   font-size: 1rem;
   font-weight: 600;
@@ -269,11 +200,11 @@
 
 .value-edit input {
   background: var(--bg-primary);
-  border: 1px solid var(--accent-cyan);
-  border-radius: 6px;
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
   padding: 6px 10px;
   width: 100px;
-  color: var(--accent-cyan);
+  color: var(--accent-primary);
   font-family: 'JetBrains Mono', monospace;
   font-size: 1rem;
   font-weight: 600;

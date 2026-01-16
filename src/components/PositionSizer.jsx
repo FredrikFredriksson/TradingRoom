@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { ArrowUp, ArrowDown, Zap } from 'lucide-react';
 import './PositionSizer.css';
 
-const PositionSizer = ({ rValue, onNewTrade, blofinConnected = false }) => {
+const PositionSizer = ({ rValue, onNewTrade }) => {
   const [tradeType, setTradeType] = useState('long');
   const [openPrice, setOpenPrice] = useState('');
   const [stopLoss, setStopLoss] = useState('');
@@ -20,8 +21,6 @@ const PositionSizer = ({ rValue, onNewTrade, blofinConnected = false }) => {
     stopLossPercent: 0,
     takeProfitPercent: 0,
   });
-  
-  const [executeOnBlofin, setExecuteOnBlofin] = useState(false);
 
   useEffect(() => {
     if (openPrice && stopLoss && rValue) {
@@ -103,7 +102,7 @@ const PositionSizer = ({ rValue, onNewTrade, blofinConnected = false }) => {
       status: 'open',
     };
 
-    onNewTrade(trade, executeOnBlofin && blofinConnected);
+    onNewTrade(trade);
     
     // Reset form
     setSymbol('');
@@ -134,14 +133,14 @@ const PositionSizer = ({ rValue, onNewTrade, blofinConnected = false }) => {
           className={`type-btn-h long ${tradeType === 'long' ? 'active' : ''}`}
           onClick={() => setTradeType('long')}
         >
-          <span className="type-arrow">↑</span>
+          <ArrowUp size={18} strokeWidth={3} />
           <span className="type-text">LONG</span>
         </button>
         <button 
           className={`type-btn-h short ${tradeType === 'short' ? 'active' : ''}`}
           onClick={() => setTradeType('short')}
         >
-          <span className="type-arrow">↓</span>
+          <ArrowDown size={18} strokeWidth={3} />
           <span className="type-text">SHORT</span>
         </button>
       </div>
@@ -280,23 +279,9 @@ const PositionSizer = ({ rValue, onNewTrade, blofinConnected = false }) => {
           </span>
         </div>
 
-        {blofinConnected && (
-          <label className="blofin-toggle">
-            <input
-              type="checkbox"
-              checked={executeOnBlofin}
-              onChange={(e) => setExecuteOnBlofin(e.target.checked)}
-            />
-            <span className="toggle-label">
-              <span className="toggle-icon">🔗</span>
-              Execute on Blofin
-            </span>
-          </label>
-        )}
-
-        <button className={`submit-btn ${executeOnBlofin ? 'blofin-active' : ''}`} onClick={handleOpenTrade}>
-          <span className="btn-icon">{executeOnBlofin ? '🚀' : '⚡'}</span>
-          <span>{executeOnBlofin ? 'Execute Trade' : 'Open Trade'}</span>
+        <button className="submit-btn" onClick={handleOpenTrade}>
+          <Zap size={18} />
+          <span>Open Trade</span>
         </button>
       </div>
     </div>

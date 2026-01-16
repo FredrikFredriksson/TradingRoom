@@ -9,9 +9,9 @@
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
-    radial-gradient(ellipse 40% 30% at 0% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34, 211, 238, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse 40% 30% at 0% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
     var(--bg-primary);
   z-index: -1;
 }
@@ -66,7 +66,7 @@
   gap: 12px;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 12px 20px;
   margin-bottom: 20px;
   color: var(--accent-amber);
@@ -74,17 +74,18 @@
 }
 
 .warning-icon {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
 }
 
 /* Main Navigation */
 .main-nav {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 24px;
   background: var(--bg-secondary);
-  padding: 6px;
-  border-radius: 16px;
+  padding: 4px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   width: fit-content;
 }
@@ -93,15 +94,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: 10px 20px;
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   position: relative;
 }
 
@@ -112,25 +113,13 @@
 
 .nav-tab.active {
   background: var(--bg-elevated);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-}
-
-.nav-tab.active::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  padding: 1px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .tab-icon {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
 }
 
 .tab-label {
@@ -139,12 +128,12 @@
 
 .tab-badge {
   background: var(--accent-primary);
-  color: white;
+  color: var(--bg-primary);
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  min-width: 18px;
   text-align: center;
 }
 
@@ -160,7 +149,8 @@
 
 /* Trade Layout - Position Sizer */
 .trade-layout {
-  max-width: 1200px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Animation */
@@ -207,8 +197,9 @@
     display: none;
   }
   
-  .tab-icon {
-    font-size: 1.3rem;
+  .tab-icon svg {
+    width: 20px;
+    height: 20px;
   }
   
   .dashboard-layout {

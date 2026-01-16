@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { LayoutDashboard, Zap, AlertTriangle } from 'lucide-react';
 import Header from './components/Header';
 import PositionSizer from './components/PositionSizer';
 import TradingJournal from './components/TradingJournal';
-import Settings from './components/Settings';
 import { supabase, tradesApi, settingsApi, dbToAppTrade } from './lib/supabase';
-import { blofinClient } from './lib/blofin';
 import './App.css';
 
 function App() {
@@ -24,100 +23,17 @@ function App() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [supabaseConnected, setSupabaseConnected] = useState(false);
-  
-  // Blofin connection state
-  const [blofinConnected, setBlofinConnected] = useState(false);
-  const [blofinSyncing, setBlofinSyncing] = useState(false);
 
   // Active tab
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  // Settings modal
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Check Blofin connection status
-  const checkBlofinStatus = useCallback(async () => {
-    try {
-      const status = await blofinClient.checkStatus();
-      setBlofinConnected(status.configured);
-      return status.configured;
-    } catch (error) {
-      console.log('Blofin backend not available');
-      setBlofinConnected(false);
-      return false;
-    }
-  }, []);
-
-  // Sync balance from Blofin
-  const syncBlofinBalance = useCallback(async () => {
-    if (!blofinConnected) return;
-    
-    try {
-      const balanceData = await blofinClient.getBalance();
-      if (balanceData.totalBalance > 0) {
-        setBalance(balanceData.totalBalance);
-      }
-    } catch (error) {
-      console.error('Error syncing Blofin balance:', error);
-    }
-  }, [blofinConnected]);
-
-  // Import trade history from Blofin
-  const importBlofinHistory = useCallback(async () => {
-    if (!blofinConnected) return;
-    
-    setBlofinSyncing(true);
-    try {
-      const history = await blofinClient.getTradeHistory(null, 100);
-      
-      // Convert Blofin trades to our format and merge with existing trades
-      const importedTrades = history.map(trade => ({
-        id: `blofin_${trade.id}`,
-        symbol: trade.symbol,
-        type: trade.side === 'buy' ? 'long' : 'short',
-        openPrice: trade.price,
-        closePrice: trade.price,
-        stopLoss: 0,
-        takeProfit: null,
-        leverage: 1,
-        positionSize: trade.size * trade.price,
-        riskAmount: rValue,
-        riskMultiple: 1,
-        openDate: trade.timestamp,
-        closeDate: trade.timestamp,
-        status: 'closed',
-        pnlDollar: trade.pnl,
-        pnlPercent: (trade.pnl / (trade.size * trade.price)) * 100,
-        rResult: trade.pnl / rValue,
-        comment: `Imported from Blofin - ${trade.instId}`,
-        source: 'blofin',
-      }));
-
-      // Add imported trades that don't already exist
-      setTrades(prev => {
-        const existingIds = new Set(prev.map(t => t.id));
-        const newTrades = importedTrades.filter(t => !existingIds.has(t.id));
-        return [...newTrades, ...prev];
-      });
-
-      console.log(`Imported ${importedTrades.length} trades from Blofin`);
-    } catch (error) {
-      console.error('Error importing Blofin history:', error);
-    } finally {
-      setBlofinSyncing(false);
-    }
-  }, [blofinConnected, rValue]);
-
-  // Check Supabase and Blofin connection and load initial data
+  // Check Supabase connection and load initial data
   useEffect(() => {
     const initializeData = async () => {
-      // Check Blofin status
-      checkBlofinStatus();
-      
       if (supabase) {
         setSupabaseConnected(true);
         
-        // Load settings
+        // Load settings (R value and balance)
         const { data: settings } = await settingsApi.get();
         if (settings?.r_value) {
           setRValue(settings.r_value);
@@ -126,32 +42,52 @@ function App() {
           setBalance(settings.balance);
         }
         
-        // Load trades
+        // Load all trades from Supabase
         const { data: dbTrades, error } = await tradesApi.getAll();
-        if (!error && dbTrades) {
-          setTrades(dbTrades.map(dbToAppTrade));
+        if (!error && dbTrades && dbTrades.length > 0) {
+          const convertedTrades = dbTrades.map(dbToAppTrade).filter(t => t !== null);
+          setTrades(convertedTrades);
+          console.log(`✅ Loaded ${convertedTrades.length} trades from Supabase`);
+          console.log('📊 Trades breakdown:', {
+            total: convertedTrades.length,
+            open: convertedTrades.filter(t => t.status === 'open').length,
+            closed: convertedTrades.filter(t => t.status === 'closed').length,
+          });
+          // Log all trades for debugging
+          console.log('📋 All loaded trades:', convertedTrades.map(t => ({
+            id: t.id,
+            symbol: t.symbol,
+            status: t.status,
+            hasClosePrice: !!t.closePrice,
+            pnlDollar: t.pnlDollar
+          })));
+          // Log first trade for debugging
+          if (convertedTrades.length > 0) {
+            console.log('🔍 Sample trade (full):', convertedTrades[0]);
+          }
+        } else if (error) {
+          console.error('❌ Error loading trades from Supabase:', error);
+        } else {
+          console.log('⚠️ No trades found in Supabase (this is normal if you haven\'t created any yet)');
         }
       } else {
-        // Fall back to localStorage
+        // Fall back to localStorage if Supabase is not configured
         const saved = localStorage.getItem('tradingRoom_trades');
         if (saved) {
-          setTrades(JSON.parse(saved));
+          try {
+            const parsedTrades = JSON.parse(saved);
+            setTrades(parsedTrades);
+            console.log(`📦 Loaded ${parsedTrades.length} trades from localStorage`);
+          } catch (e) {
+            console.error('❌ Error parsing saved trades:', e);
+          }
         }
       }
       setLoading(false);
     };
 
     initializeData();
-  }, [checkBlofinStatus]);
-
-  // Sync Blofin balance periodically when connected
-  useEffect(() => {
-    if (blofinConnected) {
-      syncBlofinBalance();
-      const interval = setInterval(syncBlofinBalance, 30000); // Every 30 seconds
-      return () => clearInterval(interval);
-    }
-  }, [blofinConnected, syncBlofinBalance]);
+  }, []);
 
   // Persist R value
   useEffect(() => {
@@ -178,53 +114,49 @@ function App() {
     }
   }, [trades, loading]);
 
-  // Handle new trade (with optional Blofin execution)
-  const handleNewTrade = useCallback(async (trade, executeOnBlofin = false) => {
+  // Handle new trade
+  const handleNewTrade = useCallback(async (trade) => {
     // Ensure we have today's date
     const tradeWithDate = {
       ...trade,
       openDate: trade.openDate || new Date().toISOString(),
     };
 
-    // If Blofin is connected and user wants to execute, place the order
-    if (executeOnBlofin && blofinConnected) {
-      try {
-        const blofinOrder = blofinClient.formatOrder(trade);
-        const result = await blofinClient.placeOrder(blofinOrder);
-        
-        if (result.code === '0') {
-          tradeWithDate.blofinOrderId = result.data?.orderId;
-          tradeWithDate.source = 'blofin';
-          console.log('✅ Order placed on Blofin:', result);
-        } else {
-          console.error('❌ Blofin order failed:', result);
-          alert(`Blofin order failed: ${result.msg || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error placing Blofin order:', error);
-        alert(`Error placing order: ${error.message}`);
-      }
-    }
-
     if (supabaseConnected) {
-      const { data, error } = await tradesApi.create(tradeWithDate);
-      if (!error && data) {
-        setTrades(prev => [dbToAppTrade(data), ...prev]);
-      } else {
-        console.error('Error creating trade:', error);
+      try {
+        const { data, error } = await tradesApi.create(tradeWithDate);
+        if (!error && data) {
+          // Trade successfully saved to Supabase
+          setTrades(prev => [dbToAppTrade(data), ...prev]);
+          console.log('✅ Trade saved to Supabase:', data.id);
+        } else {
+          console.error('❌ Error creating trade in Supabase:', error);
+          // Fallback: save locally
+          setTrades(prev => [{ ...tradeWithDate, id: Date.now() }, ...prev]);
+        }
+      } catch (err) {
+        console.error('❌ Exception creating trade:', err);
+        // Fallback: save locally
         setTrades(prev => [{ ...tradeWithDate, id: Date.now() }, ...prev]);
       }
     } else {
+      // Supabase not connected, save locally only
       setTrades(prev => [{ ...tradeWithDate, id: Date.now() }, ...prev]);
     }
     
     setActiveTab('dashboard');
-  }, [supabaseConnected, blofinConnected]);
+  }, [supabaseConnected]);
 
   // Handle closing a trade
   const handleCloseTrade = useCallback(async (tradeId, closePrice, comment = '') => {
     const trade = trades.find(t => t.id === tradeId);
-    if (!trade) return;
+    if (!trade) {
+      console.error('❌ Trade not found for ID:', tradeId);
+      console.log('Available trade IDs:', trades.map(t => t.id));
+      return;
+    }
+    
+    console.log('🔄 Closing trade:', { tradeId, symbol: trade.symbol, currentStatus: trade.status });
 
     // Calculate P&L
     let pnlPercent;
@@ -239,25 +171,40 @@ function App() {
     const closeDate = new Date().toISOString();
 
     if (supabaseConnected) {
-      const { data, error } = await tradesApi.closeTrade(
-        tradeId,
-        closePrice,
-        closeDate,
-        pnlPercent,
-        pnlDollar,
-        rResult,
-        comment
-      );
+      try {
+        const { data, error } = await tradesApi.closeTrade(
+          tradeId,
+          closePrice,
+          closeDate,
+          pnlPercent,
+          pnlDollar,
+          rResult,
+          comment
+        );
 
-      if (!error && data) {
-        setTrades(prev => prev.map(t => 
-          t.id === tradeId ? dbToAppTrade(data) : t
-        ));
-      } else {
-        console.error('Error closing trade:', error);
+        if (!error && data) {
+          // Trade successfully closed and saved to Supabase
+          const updatedTrade = dbToAppTrade(data);
+          console.log('✅ Trade closed and saved to Supabase:', {
+            tradeId,
+            updatedStatus: updatedTrade.status,
+            pnlDollar: updatedTrade.pnlDollar,
+            closePrice: updatedTrade.closePrice
+          });
+          setTrades(prev => prev.map(t => 
+            t.id === tradeId ? updatedTrade : t
+          ));
+        } else {
+          console.error('❌ Error closing trade in Supabase:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          updateTradeLocally();
+        }
+      } catch (err) {
+        console.error('❌ Exception closing trade:', err);
         updateTradeLocally();
       }
     } else {
+      // Supabase not connected, update locally only
       updateTradeLocally();
     }
 
@@ -277,8 +224,12 @@ function App() {
       }));
     }
 
-    // Update balance with the P&L
-    setBalance(prev => prev + pnlDollar);
+    // Update balance with the P&L (this will automatically save to Supabase via useEffect)
+    setBalance(prev => {
+      const newBalance = prev + pnlDollar;
+      console.log(`💰 Balance updated: $${prev.toFixed(2)} → $${newBalance.toFixed(2)} (${pnlDollar >= 0 ? '+' : ''}$${pnlDollar.toFixed(2)})`);
+      return newBalance;
+    });
   }, [trades, supabaseConnected]);
 
   // Handle deleting a trade
@@ -287,18 +238,12 @@ function App() {
       const { error } = await tradesApi.delete(tradeId);
       if (error) {
         console.error('Error deleting trade:', error);
+      } else {
+        console.log('✅ Trade deleted from Supabase:', tradeId);
       }
     }
     setTrades(prev => prev.filter(t => t.id !== tradeId));
   }, [supabaseConnected]);
-
-  // Handle Blofin configuration
-  const handleBlofinConfigured = (configured) => {
-    setBlofinConnected(configured);
-    if (configured) {
-      syncBlofinBalance();
-    }
-  };
 
   const openTrades = trades.filter(t => t.status === 'open');
 
@@ -324,17 +269,14 @@ function App() {
           balance={balance}
           onBalanceChange={setBalance}
           supabaseConnected={supabaseConnected}
-          blofinConnected={blofinConnected}
-          onSettingsClick={() => setSettingsOpen(true)}
-          onSyncBlofin={syncBlofinBalance}
-          onImportHistory={importBlofinHistory}
-          blofinSyncing={blofinSyncing}
         />
 
         {/* Connection Warning */}
         {!supabaseConnected && (
           <div className="connection-warning">
-            <span className="warning-icon">⚠️</span>
+            <span className="warning-icon">
+              <AlertTriangle size={16} />
+            </span>
             <span>Supabase not configured. Data is stored locally only.</span>
           </div>
         )}
@@ -345,7 +287,9 @@ function App() {
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
-            <span className="tab-icon">📊</span>
+            <span className="tab-icon">
+              <LayoutDashboard size={18} />
+            </span>
             <span className="tab-label">Dashboard</span>
             {openTrades.length > 0 && (
               <span className="tab-badge">{openTrades.length}</span>
@@ -355,7 +299,9 @@ function App() {
             className={`nav-tab ${activeTab === 'trade' ? 'active' : ''}`}
             onClick={() => setActiveTab('trade')}
           >
-            <span className="tab-icon">⚡</span>
+            <span className="tab-icon">
+              <Zap size={18} />
+            </span>
             <span className="tab-label">Place Trade</span>
           </button>
         </nav>
@@ -369,6 +315,7 @@ function App() {
                 rValue={rValue}
                 onDeleteTrade={handleDeleteTrade}
                 onCloseTrade={handleCloseTrade}
+                initialBalance={balance}
               />
             </div>
           )}
@@ -378,19 +325,11 @@ function App() {
               <PositionSizer 
                 rValue={rValue} 
                 onNewTrade={handleNewTrade}
-                blofinConnected={blofinConnected}
               />
             </div>
           )}
         </main>
       </div>
-
-      {/* Settings Modal */}
-      <Settings 
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onBlofinConfigured={handleBlofinConfigured}
-      />
     </div>
   );
 }

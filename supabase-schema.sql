@@ -25,10 +25,11 @@ CREATE TABLE IF NOT EXISTS trades (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Settings table (for R value and other configurations)
+-- Settings table (for R value, balance, and other configurations)
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
   r_value DECIMAL(20, 2) DEFAULT 100,
+  balance DECIMAL(20, 2) DEFAULT 1000,
   default_leverage INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -49,8 +50,8 @@ CREATE POLICY "Allow all operations on trades" ON trades FOR ALL USING (true);
 CREATE POLICY "Allow all operations on settings" ON settings FOR ALL USING (true);
 
 -- Insert default settings
-INSERT INTO settings (id, r_value, default_leverage) 
-VALUES (1, 100, 1) 
+INSERT INTO settings (id, r_value, balance, default_leverage) 
+VALUES (1, 100, 1000, 1) 
 ON CONFLICT (id) DO NOTHING;
 
 -- Function to automatically update updated_at timestamp

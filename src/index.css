@@ -24,19 +24,18 @@
   --gradient-card: linear-gradient(165deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
   --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
   
-  /* Vibrant Accent Colors */
-  --accent-primary: #6366f1;    /* Indigo */
-  --accent-cyan: #22d3ee;       /* Cyan */
-  --accent-emerald: #10b981;    /* Emerald */
-  --accent-rose: #f43f5e;       /* Rose */
-  --accent-amber: #f59e0b;      /* Amber */
-  --accent-violet: #8b5cf6;     /* Violet */
+  /* Accent Colors - Cyan/Blue focused */
+  --accent-primary: #22d3ee;       /* Cyan - Main accent */
+  --accent-secondary: #06b6d4;     /* Darker cyan */
+  --accent-blue: #3b82f6;          /* Blue */
+  --accent-emerald: #10b981;       /* Emerald */
+  --accent-amber: #f59e0b;         /* Amber */
   
   /* Semantic Colors */
   --color-success: #10b981;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
-  --color-info: #3b82f6;
+  --color-info: #22d3ee;
   
   /* Text Colors */
   --text-primary: #fafafa;
@@ -52,10 +51,15 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
-  --shadow-glow-indigo: 0 0 40px rgba(99, 102, 241, 0.15);
-  --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.15);
-  --shadow-glow-emerald: 0 0 40px rgba(16, 185, 129, 0.15);
-  --shadow-glow-rose: 0 0 40px rgba(244, 63, 94, 0.15);
+  --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.2);
+  --shadow-glow-blue: 0 0 40px rgba(59, 130, 246, 0.2);
+  --shadow-glow-emerald: 0 0 40px rgba(16, 185, 129, 0.2);
+  --shadow-glow-rose: 0 0 40px rgba(244, 63, 94, 0.2);
+  
+  /* Border Radius - Squared */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 html {
@@ -80,12 +84,12 @@ body {
 
 ::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
-  border-radius: 4px;
+  border-radius: 2px;
   border: 2px solid var(--bg-secondary);
 }
 
@@ -116,7 +120,7 @@ input[type=number] {
 
 /* Selection */
 ::selection {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(34, 211, 238, 0.3);
   color: var(--text-primary);
 }
 
@@ -163,10 +167,10 @@ input[type=number] {
 
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.5);
   }
 }
 

@@ -19,6 +19,15 @@ export const tradesApi = {
       .select('*')
       .order('open_date', { ascending: false });
     
+    if (error) {
+      console.error('❌ Supabase getAll error:', error);
+    } else {
+      console.log('📥 Raw trades from Supabase:', data?.length || 0, 'trades');
+      if (data && data.length > 0) {
+        console.log('📋 First trade raw data:', data[0]);
+      }
+    }
+    
     return { data: data || [], error };
   },
 
@@ -40,23 +49,33 @@ export const tradesApi = {
   async create(trade) {
     if (!supabase) return { data: null, error: 'Supabase not configured' };
     
+    const tradeData = {
+      symbol: trade.symbol,
+      type: trade.type,
+      open_price: trade.openPrice,
+      stop_loss: trade.stopLoss,
+      take_profit: trade.takeProfit,
+      leverage: trade.leverage,
+      position_size: trade.positionSize,
+      risk_amount: trade.riskAmount,
+      risk_multiple: trade.riskMultiple,
+      open_date: trade.openDate,
+      status: trade.status || 'open',
+    };
+    
+    console.log('💾 Creating trade in Supabase:', tradeData);
+    
     const { data, error } = await supabase
       .from('trades')
-      .insert([{
-        symbol: trade.symbol,
-        type: trade.type,
-        open_price: trade.openPrice,
-        stop_loss: trade.stopLoss,
-        take_profit: trade.takeProfit,
-        leverage: trade.leverage,
-        position_size: trade.positionSize,
-        risk_amount: trade.riskAmount,
-        risk_multiple: trade.riskMultiple,
-        open_date: trade.openDate,
-        status: trade.status,
-      }])
+      .insert([tradeData])
       .select()
       .single();
+    
+    if (error) {
+      console.error('❌ Error creating trade in Supabase:', error);
+    } else {
+      console.log('✅ Trade created in Supabase:', data?.id);
+    }
     
     return { data, error };
   },
@@ -65,20 +84,31 @@ export const tradesApi = {
   async closeTrade(id, closePrice, closeDate, pnlPercent, pnlDollar, rResult, comment = '') {
     if (!supabase) return { data: null, error: 'Supabase not configured' };
     
+    const updateData = {
+      close_price: closePrice,
+      close_date: closeDate,
+      status: 'closed',
+      pnl_percent: pnlPercent,
+      pnl_dollar: pnlDollar,
+      r_result: rResult,
+      notes: comment || '',
+    };
+    
+    console.log('💾 Closing trade in Supabase:', { id, ...updateData });
+    
     const { data, error } = await supabase
       .from('trades')
-      .update({
-        close_price: closePrice,
-        close_date: closeDate,
-        status: 'closed',
-        pnl_percent: pnlPercent,
-        pnl_dollar: pnlDollar,
-        r_result: rResult,
-        notes: comment,
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
+    
+    if (error) {
+      console.error('❌ Error closing trade in Supabase:', error);
+      console.error('Update query details:', { id, updateData });
+    } else {
+      console.log('✅ Trade closed in Supabase:', data?.id, 'Status:', data?.status);
+    }
     
     return { data, error };
   },
@@ -138,24 +168,31 @@ export const settingsApi = {
 
 // Helper to convert Supabase trade format to app format
 export function dbToAppTrade(dbTrade) {
-  return {
+  if (!dbTrade) {
+    console.error('❌ dbToAppTrade: dbTrade is null or undefined');
+    return null;
+  }
+  
+  const converted = {
     id: dbTrade.id,
-    symbol: dbTrade.symbol,
-    type: dbTrade.type,
-    openPrice: dbTrade.open_price,
-    stopLoss: dbTrade.stop_loss,
-    takeProfit: dbTrade.take_profit,
-    leverage: dbTrade.leverage,
-    positionSize: dbTrade.position_size,
-    riskAmount: dbTrade.risk_amount,
-    riskMultiple: dbTrade.risk_multiple,
-    openDate: dbTrade.open_date,
-    closePrice: dbTrade.close_price,
-    closeDate: dbTrade.close_date,
-    status: dbTrade.status,
-    pnlPercent: dbTrade.pnl_percent,
-    pnlDollar: dbTrade.pnl_dollar,
-    rResult: dbTrade.r_result,
+    symbol: dbTrade.symbol || '',
+    type: dbTrade.type || 'long',
+    openPrice: parseFloat(dbTrade.open_price) || 0,
+    stopLoss: parseFloat(dbTrade.stop_loss) || 0,
+    takeProfit: dbTrade.take_profit ? parseFloat(dbTrade.take_profit) : null,
+    leverage: parseFloat(dbTrade.leverage) || 1,
+    positionSize: parseFloat(dbTrade.position_size) || 0,
+    riskAmount: parseFloat(dbTrade.risk_amount) || 0,
+    riskMultiple: parseFloat(dbTrade.risk_multiple) || 1,
+    openDate: dbTrade.open_date || new Date().toISOString(),
+    closePrice: dbTrade.close_price ? parseFloat(dbTrade.close_price) : null,
+    closeDate: dbTrade.close_date || null,
+    status: (dbTrade.status || 'open').toLowerCase(), // Ensure lowercase for consistency
+    pnlPercent: dbTrade.pnl_percent ? parseFloat(dbTrade.pnl_percent) : null,
+    pnlDollar: dbTrade.pnl_dollar ? parseFloat(dbTrade.pnl_dollar) : null,
+    rResult: dbTrade.r_result ? parseFloat(dbTrade.r_result) : null,
     comment: dbTrade.notes || '',
   };
+  
+  return converted;
 }

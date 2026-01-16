@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TrendingUp, Database } from 'lucide-react';
 import './Header.css';
 
 const Header = ({ 
@@ -6,12 +7,7 @@ const Header = ({
   onRValueChange, 
   balance, 
   onBalanceChange, 
-  supabaseConnected,
-  blofinConnected,
-  onSettingsClick,
-  onSyncBlofin,
-  onImportHistory,
-  blofinSyncing
+  supabaseConnected
 }) => {
   const [isEditingR, setIsEditingR] = useState(false);
   const [tempRValue, setTempRValue] = useState(rValue);
@@ -62,16 +58,7 @@ const Header = ({
       <div className="header-brand">
         <div className="logo">
           <div className="logo-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 17L9 11L13 15L21 7" stroke="url(#gradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M17 7H21V11" stroke="url(#gradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="gradient" x1="3" y1="7" x2="21" y2="17" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#6366f1"/>
-                  <stop offset="1" stopColor="#22d3ee"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <TrendingUp size={20} />
           </div>
           <div className="brand-text">
             <h1>TradingRoom</h1>
@@ -81,46 +68,13 @@ const Header = ({
       </div>
       
       <div className="header-controls">
-        {/* Connection Indicators */}
-        <div className="connection-indicators">
-          {supabaseConnected && (
-            <div className="sync-status supabase" title="Supabase Connected">
-              <span className="sync-dot"></span>
-              <span className="sync-text">DB</span>
-            </div>
-          )}
-          
-          {blofinConnected ? (
-            <div className="sync-status blofin" title="Blofin Connected">
-              <span className="sync-dot"></span>
-              <span className="sync-text">Blofin</span>
-              <button 
-                className="sync-btn"
-                onClick={onSyncBlofin}
-                disabled={blofinSyncing}
-                title="Sync balance"
-              >
-                {blofinSyncing ? '🔄' : '↻'}
-              </button>
-              <button 
-                className="import-btn"
-                onClick={onImportHistory}
-                disabled={blofinSyncing}
-                title="Import trade history"
-              >
-                📥
-              </button>
-            </div>
-          ) : (
-            <button 
-              className="connect-blofin-btn"
-              onClick={onSettingsClick}
-              title="Connect Blofin Exchange"
-            >
-              🔗 Connect Blofin
-            </button>
-          )}
-        </div>
+        {/* Connection Indicator */}
+        {supabaseConnected && (
+          <div className="sync-status supabase" title="Supabase Connected">
+            <Database size={14} />
+            <span className="sync-text">DB Synced</span>
+          </div>
+        )}
 
         {/* Balance Display */}
         <div className="balance-config">
@@ -181,11 +135,6 @@ const Header = ({
             </button>
           )}
         </div>
-
-        {/* Settings Button */}
-        <button className="settings-btn" onClick={onSettingsClick} title="Settings">
-          ⚙️
-        </button>
       </div>
     </header>
   );

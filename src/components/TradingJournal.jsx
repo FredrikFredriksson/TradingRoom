@@ -8,11 +8,37 @@ import {
   subMonths,
   addMonths,
 } from 'date-fns';
+import { 
+  Target, 
+  TrendingUp, 
+  FileText, 
+  ArrowUp, 
+  ArrowDown, 
+  ChevronLeft, 
+  ChevronRight,
+  X, 
+  Trash2, 
+  MessageSquare,
+  BarChart3,
+  Check
+} from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine
+} from 'recharts';
 import './TradingJournal.css';
 
-const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
+const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBalance = 1000 }) => {
   // Main tab: 'active', 'stats', 'trades'
-  const [mainTab, setMainTab] = useState('active');
+  const [mainTab, setMainTab] = useState('stats');
   
   // View mode for trades/stats: 'month', 'range', 'all'
   const [viewMode, setViewMode] = useState('month');
@@ -163,6 +189,55 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
     return summaries;
   }, [closedTrades, selectedMonth]);
 
+  // Calculate balance and P&L % history for charts
+  const chartData = useMemo(() => {
+    // Sort trades by close date (or open date if not closed)
+    const sortedTrades = [...closedTrades].sort((a, b) => {
+      const dateA = new Date(a.closeDate || a.openDate);
+      const dateB = new Date(b.closeDate || b.openDate);
+      return dateA - dateB;
+    });
+
+    if (sortedTrades.length === 0) return [];
+
+    // Calculate initial balance by subtracting all P&L from current balance
+    const totalPnL = sortedTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
+    const calculatedInitialBalance = initialBalance - totalPnL;
+    const startBalance = calculatedInitialBalance > 0 ? calculatedInitialBalance : initialBalance;
+
+    let runningBalance = startBalance;
+    const data = [];
+
+    // Add initial point
+    const firstTradeDate = new Date(sortedTrades[0].closeDate || sortedTrades[0].openDate);
+    data.push({
+      date: format(firstTradeDate, 'MMM d'),
+      dateFull: firstTradeDate,
+      balance: startBalance,
+      pnlPercent: 0,
+      cumulativePnL: 0,
+    });
+
+    // Add data point for each trade
+    sortedTrades.forEach((trade) => {
+      const tradeDate = new Date(trade.closeDate || trade.openDate);
+      const pnlDollar = trade.pnlDollar || 0;
+      runningBalance += pnlDollar;
+      const cumulativePnL = runningBalance - startBalance;
+      const pnlPercent = startBalance > 0 ? (cumulativePnL / startBalance) * 100 : 0;
+
+      data.push({
+        date: format(tradeDate, 'MMM d'),
+        dateFull: tradeDate,
+        balance: runningBalance,
+        pnlPercent: pnlPercent,
+        cumulativePnL: cumulativePnL,
+      });
+    });
+
+    return data;
+  }, [closedTrades, initialBalance]);
+
   const handlePrevMonth = () => setSelectedMonth(prev => subMonths(prev, 1));
   const handleNextMonth = () => setSelectedMonth(prev => addMonths(prev, 1));
 
@@ -218,7 +293,10 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
     <div className="trading-journal-enhanced">
       {/* Header */}
       <div className="journal-header">
-        <h2>📊 Trading Dashboard</h2>
+        <h2>
+          <BarChart3 size={24} />
+          Trading Dashboard
+        </h2>
         <div className="r-info">
           <span className="r-label">1R =</span>
           <span className="r-value">${rValue}</span>
@@ -228,27 +306,27 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
       {/* Main Tabs */}
       <div className="main-tabs">
         <button 
+          className={`main-tab ${mainTab === 'stats' ? 'active' : ''}`}
+          onClick={() => setMainTab('stats')}
+        >
+          <TrendingUp size={16} />
+          Statistics
+        </button>
+        <button 
           className={`main-tab ${mainTab === 'active' ? 'active' : ''}`}
           onClick={() => setMainTab('active')}
         >
-          <span className="tab-icon">🎯</span>
+          <Target size={16} />
           Active Trades
           {openTrades.length > 0 && (
             <span className="tab-count">{openTrades.length}</span>
           )}
         </button>
         <button 
-          className={`main-tab ${mainTab === 'stats' ? 'active' : ''}`}
-          onClick={() => setMainTab('stats')}
-        >
-          <span className="tab-icon">📈</span>
-          Statistics
-        </button>
-        <button 
           className={`main-tab ${mainTab === 'trades' ? 'active' : ''}`}
           onClick={() => setMainTab('trades')}
         >
-          <span className="tab-icon">📋</span>
+          <FileText size={16} />
           Trade History
           <span className="tab-count-muted">{closedTrades.length}</span>
         </button>
@@ -259,7 +337,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
         <div className="active-trades-section">
           {openTrades.length === 0 ? (
             <div className="empty-state-large">
-              <div className="empty-icon-large">📊</div>
+              <BarChart3 size={48} strokeWidth={1.5} />
               <h3>No Active Trades</h3>
               <p>Go to "Place Trade" to open a new position</p>
             </div>
@@ -273,7 +351,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                     <div className="trade-card-header">
                       <div className="trade-symbol-info">
                         <span className={`trade-type-indicator ${trade.type}`}>
-                          {trade.type === 'long' ? '↑' : '↓'}
+                          {trade.type === 'long' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
                         </span>
                         <span className="trade-symbol">{trade.symbol}</span>
                         <span className="trade-leverage">{trade.leverage}x</span>
@@ -335,7 +413,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                           )}
                           <div className="close-actions">
                             <button className="btn-confirm" onClick={handleConfirmClose}>
-                              ✓ Confirm
+                              <Check size={14} /> Confirm
                             </button>
                             <button className="btn-cancel" onClick={handleCancelClose}>
                               Cancel
@@ -388,11 +466,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
           {/* Month Navigator */}
           {viewMode === 'month' && (
             <div className="month-navigator">
-              <button className="nav-btn" onClick={handlePrevMonth}>←</button>
+              <button className="nav-btn" onClick={handlePrevMonth}>
+                <ChevronLeft size={18} />
+              </button>
               <h3 className="current-month">
                 {format(selectedMonth, 'MMMM yyyy')}
               </h3>
-              <button className="nav-btn" onClick={handleNextMonth}>→</button>
+              <button className="nav-btn" onClick={handleNextMonth}>
+                <ChevronRight size={18} />
+              </button>
             </div>
           )}
 
@@ -505,6 +587,96 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
               </div>
             </div>
           )}
+
+          {/* Balance and P&L Charts */}
+          {chartData.length > 0 && (
+            <div className="charts-section">
+              {/* Balance Chart */}
+              <div className="chart-container">
+                <h4 className="chart-title">Account Balance Over Time</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="var(--text-muted)"
+                      style={{ fontSize: '0.75rem' }}
+                    />
+                    <YAxis 
+                      stroke="var(--text-muted)"
+                      style={{ fontSize: '0.75rem' }}
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'var(--bg-elevated)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-primary)'
+                      }}
+                      formatter={(value) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Balance']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="balance" 
+                      stroke="var(--accent-primary)" 
+                      strokeWidth={2}
+                      fill="url(#balanceGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* P&L % Chart */}
+              <div className="chart-container">
+                <h4 className="chart-title">P&L % Over Time</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="var(--text-muted)"
+                      style={{ fontSize: '0.75rem' }}
+                    />
+                    <YAxis 
+                      stroke="var(--text-muted)"
+                      style={{ fontSize: '0.75rem' }}
+                      tickFormatter={(value) => `${value.toFixed(1)}%`}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'var(--bg-elevated)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-primary)'
+                      }}
+                      formatter={(value) => [`${value >= 0 ? '+' : ''}${value.toFixed(2)}%`, 'P&L %']}
+                    />
+                    <ReferenceLine 
+                      y={0} 
+                      stroke="var(--text-muted)" 
+                      strokeWidth={1}
+                      strokeDasharray="5 5"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pnlPercent" 
+                      stroke="var(--accent-primary)" 
+                      strokeWidth={2}
+                      dot={{ fill: 'var(--accent-primary)', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -536,11 +708,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
           {/* Month Navigator */}
           {viewMode === 'month' && (
             <div className="month-navigator">
-              <button className="nav-btn" onClick={handlePrevMonth}>←</button>
+              <button className="nav-btn" onClick={handlePrevMonth}>
+                <ChevronLeft size={18} />
+              </button>
               <h3 className="current-month">
                 {format(selectedMonth, 'MMMM yyyy')}
               </h3>
-              <button className="nav-btn" onClick={handleNextMonth}>→</button>
+              <button className="nav-btn" onClick={handleNextMonth}>
+                <ChevronRight size={18} />
+              </button>
             </div>
           )}
 
@@ -590,14 +766,14 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                   className="sort-order-btn"
                   onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                 >
-                  {sortOrder === 'desc' ? '↓' : '↑'}
+                  {sortOrder === 'desc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
                 </button>
               </div>
             </div>
 
             {sortedTrades.length === 0 ? (
               <div className="empty-trades">
-                <span className="empty-icon">📝</span>
+                <FileText size={32} strokeWidth={1.5} />
                 <p>No closed trades for this period</p>
               </div>
             ) : (
@@ -625,7 +801,11 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                     <span className="cell-symbol">
                       <span className={`type-dot ${trade.type}`}></span>
                       {trade.symbol}
-                      {trade.comment && <span className="has-comment-indicator" title="Has comment">💬</span>}
+                      {trade.comment && (
+                        <span className="has-comment-indicator" title="Has comment">
+                          <MessageSquare size={12} />
+                        </span>
+                      )}
                     </span>
                     <span className={`cell-type ${trade.type}`}>
                       {trade.type.toUpperCase()}
@@ -657,7 +837,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                           }}
                           title="Delete trade"
                         >
-                          🗑️
+                          <Trash2 size={14} />
                         </button>
                       )}
                     </span>
@@ -676,12 +856,12 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
             <div className="trade-modal-header">
               <div className="modal-trade-info">
                 <span className={`modal-type-badge ${selectedTrade.type}`}>
-                  {selectedTrade.type === 'long' ? '↑ LONG' : '↓ SHORT'}
+                  {selectedTrade.type === 'long' ? <><ArrowUp size={14} /> LONG</> : <><ArrowDown size={14} /> SHORT</>}
                 </span>
                 <h3>{selectedTrade.symbol}</h3>
               </div>
               <button className="modal-close-btn" onClick={() => setSelectedTrade(null)}>
-                ✕
+                <X size={18} />
               </button>
             </div>
 
@@ -750,7 +930,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
 
             {selectedTrade.comment && (
               <div className="modal-comment">
-                <span className="comment-label">💬 Comment</span>
+                <span className="comment-label">
+                  <MessageSquare size={14} /> Comment
+                </span>
                 <p className="comment-text">{selectedTrade.comment}</p>
               </div>
             )}
@@ -766,7 +948,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade }) => {
                     }
                   }}
                 >
-                  🗑️ Delete Trade
+                  <Trash2 size={14} /> Delete Trade
                 </button>
               )}
             </div>
