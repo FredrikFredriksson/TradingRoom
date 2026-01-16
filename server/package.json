@@ -1,0 +1,17 @@
+{
+  "name": "tradingroom-server",
+  "version": "1.0.0",
+  "description": "Backend server for TradingRoom - Blofin API integration",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2"
+  }
+}

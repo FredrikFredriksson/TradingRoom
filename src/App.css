@@ -1,0 +1,217 @@
+/* Main App */
+.app {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Background Effect */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse 40% 30% at 0% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 40%),
+    var(--bg-primary);
+  z-index: -1;
+}
+
+.app-container {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 20px 32px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.loader {
+  text-align: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--bg-elevated);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader p {
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+/* Connection Warning */
+.connection-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  color: var(--accent-amber);
+  font-size: 0.875rem;
+}
+
+.warning-icon {
+  font-size: 1rem;
+}
+
+/* Main Navigation */
+.main-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--bg-secondary);
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  width: fit-content;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.nav-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-tab.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.tab-icon {
+  font-size: 1.1rem;
+}
+
+.tab-label {
+  font-weight: 600;
+}
+
+.tab-badge {
+  background: var(--accent-primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+}
+
+/* Dashboard Layout */
+.dashboard-layout {
+  max-width: 100%;
+}
+
+/* Trade Layout - Position Sizer */
+.trade-layout {
+  max-width: 1200px;
+}
+
+/* Animation */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar for dashboard-left */
+.dashboard-left::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-left::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-left::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.dashboard-left::-webkit-scrollbar-thumb:hover {
+  background: var(--border-bright);
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 16px;
+  }
+  
+  .main-nav {
+    width: 100%;
+  }
+  
+  .nav-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 16px;
+  }
+  
+  .tab-label {
+    display: none;
+  }
+  
+  .tab-icon {
+    font-size: 1.3rem;
+  }
+  
+  .dashboard-layout {
+    gap: 16px;
+  }
+}
