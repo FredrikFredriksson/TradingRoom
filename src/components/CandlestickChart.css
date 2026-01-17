@@ -1,0 +1,187 @@
+.candlestick-chart-container {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.candlestick-chart-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  border-radius: 0;
+  padding: 20px;
+}
+
+.candlestick-chart-container.empty,
+.candlestick-chart-container.loading,
+.candlestick-chart-container.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.empty-chart {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-chart svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.chart-loading,
+.chart-error {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.chart-error {
+  color: var(--color-danger);
+}
+
+/* Chart Controls */
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.timeframe-selector {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.timeframe-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.timeframe-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.timeframe-btn.active {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.chart-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chart-action-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Chart Wrapper */
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.candlestick-canvas {
+  width: 100%;
+  display: block;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+}
+
+/* Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  pointer-events: none;
+  min-width: 200px;
+  transform: translateX(-50%);
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+}
+
+.tooltip-row:last-child {
+  margin-bottom: 0;
+}
+
+.tooltip-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tooltip-value {
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timeframe-selector {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chart-actions {
+    justify-content: center;
+  }
+
+  .candlestick-chart-container {
+    padding: 12px;
+  }
+}

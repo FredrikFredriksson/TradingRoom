@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { LayoutDashboard, Zap, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import Header from './components/Header';
 import PositionSizer from './components/PositionSizer';
 import TradingJournal from './components/TradingJournal';
+import Analytics from './components/Analytics';
 import { supabase, tradesApi, settingsApi, dbToAppTrade } from './lib/supabase';
 import './App.css';
 
@@ -25,7 +26,126 @@ function App() {
   const [supabaseConnected, setSupabaseConnected] = useState(false);
 
   // Active tab
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('analytics');
+
+  // Generate test trades function (exposed to window for console access)
+  const generateTestTrades = useCallback(async () => {
+    if (!supabase) {
+      console.error('❌ Supabase not configured');
+      return;
+    }
+
+    const symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'ADA/USDT'];
+    const types = ['long', 'short'];
+    const trades = [];
+    const startDate = new Date('2024-01-01');
+    const endDate = new Date('2024-03-31');
+    const currentRValue = rValue;
+
+    console.log('🚀 Generating 30 test trades for Jan-March 2024...');
+
+    for (let i = 0; i < 30; i++) {
+      const openDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const leverage = [1, 2, 3, 5, 10][Math.floor(Math.random() * 5)];
+
+      const basePrice = type === 'long' ? 40000 + Math.random() * 10000 : 3000 + Math.random() * 2000;
+      const openPrice = parseFloat(basePrice.toFixed(2));
+
+      const riskMultiple = 0.5 + Math.random() * 2.5;
+      const riskAmount = currentRValue * riskMultiple;
+
+      const stopLossPercent = 2 + Math.random() * 3;
+      const stopLoss = type === 'long' 
+        ? parseFloat((openPrice * (1 - stopLossPercent / 100)).toFixed(2))
+        : parseFloat((openPrice * (1 + stopLossPercent / 100)).toFixed(2));
+
+      const priceDiff = Math.abs(openPrice - stopLoss);
+      const positionSize = parseFloat((riskAmount / priceDiff).toFixed(2));
+
+      const isClosed = Math.random() > 0.2;
+
+      let closePrice = null;
+      let closeDate = null;
+      let pnlPercent = null;
+      let pnlDollar = null;
+      let rResult = null;
+      let status = 'open';
+
+      if (isClosed) {
+        closeDate = new Date(openDate);
+        closeDate.setDate(closeDate.getDate() + Math.floor(Math.random() * 7) + 1);
+
+        const rMultiplier = -2 + Math.random() * 5; // -2R to +3R
+        rResult = parseFloat(rMultiplier.toFixed(2));
+        pnlDollar = parseFloat((currentRValue * rMultiplier).toFixed(2));
+
+        if (type === 'long') {
+          const priceChange = (pnlDollar / positionSize);
+          closePrice = parseFloat((openPrice + priceChange).toFixed(2));
+        } else {
+          const priceChange = (pnlDollar / positionSize);
+          closePrice = parseFloat((openPrice - priceChange).toFixed(2));
+        }
+
+        pnlPercent = parseFloat(((pnlDollar / (positionSize * openPrice)) * 100).toFixed(2));
+        status = 'closed';
+      }
+
+      trades.push({
+        symbol,
+        type,
+        open_price: openPrice,
+        stop_loss: stopLoss,
+        take_profit: null,
+        leverage,
+        position_size: positionSize,
+        risk_amount: riskAmount,
+        risk_multiple: parseFloat(riskMultiple.toFixed(2)),
+        open_date: openDate.toISOString(),
+        close_price: closePrice,
+        close_date: closeDate ? closeDate.toISOString() : null,
+        status,
+        pnl_percent: pnlPercent,
+        pnl_dollar: pnlDollar,
+        r_result: rResult,
+        notes: isClosed ? (rResult > 0 ? 'Good trade' : 'Stopped out') : '',
+      });
+    }
+
+    trades.sort((a, b) => new Date(a.open_date) - new Date(b.open_date));
+
+    console.log(`📊 Generated ${trades.length} trades`);
+    console.log(`   Open: ${trades.filter(t => t.status === 'open').length}`);
+    console.log(`   Closed: ${trades.filter(t => t.status === 'closed').length}`);
+
+    const { data, error } = await supabase
+      .from('trades')
+      .insert(trades)
+      .select();
+
+    if (error) {
+      console.error('❌ Error inserting trades:', error);
+    } else {
+      console.log(`✅ Successfully inserted ${data?.length || 0} trades!`);
+      // Reload trades
+      const { data: dbTrades } = await tradesApi.getAll();
+      if (dbTrades) {
+        const convertedTrades = dbTrades.map(dbToAppTrade).filter(t => t !== null);
+        setTrades(convertedTrades);
+        console.log('🔄 Trades reloaded in app');
+      }
+    }
+  }, [rValue]);
+
+  // Expose function to window for console access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.generateTestTrades = generateTestTrades;
+      console.log('💡 Tip: Run generateTestTrades() in the console to add test data');
+    }
+  }, [generateTestTrades]);
 
   // Check Supabase connection and load initial data
   useEffect(() => {
@@ -284,6 +404,15 @@ function App() {
         {/* Main Navigation Tabs */}
         <nav className="main-nav">
           <button
+            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <span className="tab-icon">
+              <BarChart3 size={18} />
+            </span>
+            <span className="tab-label">Analytics</span>
+          </button>
+          <button
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
@@ -308,6 +437,12 @@ function App() {
 
         {/* Tab Content */}
         <main className="main-content">
+          {activeTab === 'analytics' && (
+            <div className="analytics-layout animate-fadeIn">
+              <Analytics />
+            </div>
+          )}
+
           {activeTab === 'dashboard' && (
             <div className="dashboard-layout animate-fadeIn">
               <TradingJournal 

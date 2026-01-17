@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   format, 
   startOfMonth, 
@@ -7,6 +7,12 @@ import {
   isWithinInterval,
   subMonths,
   addMonths,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  getDay,
 } from 'date-fns';
 import { 
   Target, 
@@ -42,7 +48,8 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
   
   // View mode for trades/stats: 'month', 'range', 'all'
   const [viewMode, setViewMode] = useState('month');
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  // Default to January 2025 for test data
+  const [selectedMonth, setSelectedMonth] = useState(new Date(2025, 0, 1));
   const [dateRange, setDateRange] = useState({
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -55,14 +62,58 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
   const [closingTrade, setClosingTrade] = useState(null);
   const [closePrice, setClosePrice] = useState('');
   const [closeComment, setCloseComment] = useState('');
+  
+  // Calendar view state
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   // Split trades
   const openTrades = trades.filter(t => t.status === 'open');
   const closedTrades = trades.filter(t => t.status === 'closed');
+  
+  // Update selectedMonth when trades load to match the year of trades
+  useEffect(() => {
+    if (closedTrades.length > 0) {
+      const tradesWithDates = closedTrades
+        .filter(t => t.closeDate)
+        .map(t => {
+          try {
+            return parseISO(t.closeDate);
+          } catch {
+            return null;
+          }
+        })
+        .filter(d => d && !isNaN(d.getTime()));
+      
+      if (tradesWithDates.length > 0) {
+        const years = tradesWithDates.map(d => d.getFullYear());
+        const mostCommonYear = years.sort((a, b) => 
+          years.filter(y => y === a).length - years.filter(y => y === b).length
+        ).pop();
+        
+        // Only update if current month is not in the year range
+        const currentYear = selectedMonth.getFullYear();
+        if (currentYear !== mostCommonYear && mostCommonYear) {
+          setSelectedMonth(new Date(mostCommonYear, 0, 1));
+        }
+      }
+    }
+  }, [closedTrades.length]); // Only run when trades count changes
 
   // Filter trades based on view mode
   const filteredTrades = useMemo(() => {
-    if (viewMode === 'all') return closedTrades;
+    if (viewMode === 'all') {
+      // Return all closed trades with valid close dates
+      return closedTrades.filter(trade => {
+        if (!trade.closeDate) return false;
+        try {
+          const tradeDate = parseISO(trade.closeDate);
+          return !isNaN(tradeDate.getTime());
+        } catch {
+          return false;
+        }
+      });
+    }
 
     let start, end;
     if (viewMode === 'month') {
@@ -74,8 +125,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
     }
 
     return closedTrades.filter(trade => {
-      const tradeDate = parseISO(trade.closeDate || trade.openDate);
-      return isWithinInterval(tradeDate, { start, end });
+      // For closed trades, always use closeDate (when P&L was realized)
+      if (!trade.closeDate) return false; // Skip trades without close date
+      try {
+        const tradeDate = parseISO(trade.closeDate);
+        if (isNaN(tradeDate.getTime())) return false; // Invalid date
+        return isWithinInterval(tradeDate, { start, end });
+      } catch (e) {
+        return false;
+      }
     });
   }, [closedTrades, viewMode, selectedMonth, dateRange]);
 
@@ -86,6 +144,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
       
       switch (sortBy) {
         case 'date':
+          // For closed trades, use closeDate
           aVal = new Date(a.closeDate || a.openDate);
           bVal = new Date(b.closeDate || b.openDate);
           break;
@@ -159,6 +218,45 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
     };
   }, [filteredTrades]);
 
+  // Calculate daily PnL for calendar view
+  const dailyPnL = useMemo(() => {
+    if (!showCalendar) return {};
+    
+    const monthStart = startOfMonth(calendarMonth);
+    const monthEnd = endOfMonth(calendarMonth);
+    
+    const dailyData = {};
+    
+    // Initialize all days in month
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    days.forEach(day => {
+      const dayKey = format(day, 'yyyy-MM-dd');
+      dailyData[dayKey] = {
+        date: day,
+        pnl: 0,
+        trades: [],
+        rTotal: 0,
+      };
+    });
+    
+    // Add trades that closed on each day
+    closedTrades.forEach(trade => {
+      // For closed trades, always use closeDate
+      if (!trade.closeDate) return; // Skip trades without close date
+      const closeDate = parseISO(trade.closeDate);
+      if (isWithinInterval(closeDate, { start: monthStart, end: monthEnd })) {
+        const dayKey = format(closeDate, 'yyyy-MM-dd');
+        if (dailyData[dayKey]) {
+          dailyData[dayKey].pnl += trade.pnlDollar || 0;
+          dailyData[dayKey].rTotal += trade.rResult || 0;
+          dailyData[dayKey].trades.push(trade);
+        }
+      }
+    });
+    
+    return dailyData;
+  }, [closedTrades, calendarMonth, showCalendar]);
+
   // Get monthly summaries for the year
   const monthlySummaries = useMemo(() => {
     const year = selectedMonth.getFullYear();
@@ -169,8 +267,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
       const monthEnd = endOfMonth(monthStart);
       
       const monthTrades = closedTrades.filter(trade => {
-        const tradeDate = parseISO(trade.closeDate || trade.openDate);
-        return isWithinInterval(tradeDate, { start: monthStart, end: monthEnd });
+        // For closed trades, always use closeDate (when P&L was realized)
+        if (!trade.closeDate) return false; // Skip trades without close date
+        try {
+          const tradeDate = parseISO(trade.closeDate);
+          if (isNaN(tradeDate.getTime())) return false; // Invalid date
+          return isWithinInterval(tradeDate, { start: monthStart, end: monthEnd });
+        } catch (e) {
+          return false;
+        }
       });
       
       const pnl = monthTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
@@ -191,12 +296,14 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
 
   // Calculate balance and P&L % history for charts
   const chartData = useMemo(() => {
-    // Sort trades by close date (or open date if not closed)
-    const sortedTrades = [...closedTrades].sort((a, b) => {
-      const dateA = new Date(a.closeDate || a.openDate);
-      const dateB = new Date(b.closeDate || b.openDate);
-      return dateA - dateB;
-    });
+    // Sort trades by close date (closed trades should always have closeDate)
+    const sortedTrades = [...closedTrades]
+      .filter(t => t.closeDate) // Only include trades with close dates
+      .sort((a, b) => {
+        const dateA = new Date(a.closeDate);
+        const dateB = new Date(b.closeDate);
+        return dateA - dateB;
+      });
 
     if (sortedTrades.length === 0) return [];
 
@@ -567,7 +674,12 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                     <div 
                       key={idx} 
                       className={`month-bar-container ${isCurrentMonth ? 'selected' : ''}`}
-                      onClick={() => setSelectedMonth(summary.month)}
+                      onClick={() => {
+                        setSelectedMonth(summary.month);
+                        setCalendarMonth(summary.month);
+                        setShowCalendar(true);
+                      }}
+                      title={`Click to view ${format(summary.month, 'MMMM')} calendar`}
                     >
                       <div className="bar-wrapper">
                         <div 
@@ -584,6 +696,95 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Calendar View Modal */}
+          {showCalendar && (
+            <div className="calendar-modal-overlay" onClick={() => setShowCalendar(false)}>
+              <div className="calendar-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="calendar-header">
+                  <button className="calendar-nav-btn" onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}>
+                    <ChevronLeft size={20} />
+                  </button>
+                  <h3 className="calendar-month-title">
+                    {format(calendarMonth, 'MMMM yyyy')}
+                  </h3>
+                  <button className="calendar-nav-btn" onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}>
+                    <ChevronRight size={20} />
+                  </button>
+                  <button className="calendar-close-btn" onClick={() => setShowCalendar(false)}>
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="calendar-grid">
+                  {/* Day headers */}
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <div key={day} className="calendar-day-header">{day}</div>
+                  ))}
+                  
+                  {/* Calendar days */}
+                  {(() => {
+                    const monthStart = startOfMonth(calendarMonth);
+                    const monthEnd = endOfMonth(calendarMonth);
+                    const calendarStart = startOfWeek(monthStart);
+                    const calendarEnd = endOfWeek(monthEnd);
+                    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+                    
+                    return days.map((day, idx) => {
+                      const dayKey = format(day, 'yyyy-MM-dd');
+                      const dayData = dailyPnL[dayKey] || { pnl: 0, trades: [], rTotal: 0 };
+                      const isCurrentMonth = isSameMonth(day, calendarMonth);
+                      const isToday = isSameDay(day, new Date());
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${dayData.pnl > 0 ? 'positive' : dayData.pnl < 0 ? 'negative' : ''}`}
+                          title={dayData.trades.length > 0 ? `${dayData.trades.length} trade(s) on ${format(day, 'MMM d')}` : ''}
+                        >
+                          <div className="calendar-day-number">{format(day, 'd')}</div>
+                          {dayData.pnl !== 0 && (
+                            <div className={`calendar-day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}`}>
+                              {formatCurrency(dayData.pnl)}
+                            </div>
+                          )}
+                          {dayData.trades.length > 0 && (
+                            <div className="calendar-day-trades">
+                              {dayData.trades.length} trade{dayData.trades.length > 1 ? 's' : ''}
+                            </div>
+                          )}
+                          {/* Hover tooltip */}
+                          {dayData.trades.length > 0 && (
+                            <div className="calendar-day-tooltip">
+                              <div className="tooltip-header">
+                                <strong>{format(day, 'MMM d, yyyy')}</strong>
+                                <div className={`tooltip-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}`}>
+                                  {formatCurrency(dayData.pnl)} ({formatR(dayData.rTotal)})
+                                </div>
+                              </div>
+                              <div className="tooltip-trades">
+                                {dayData.trades.map((trade, tradeIdx) => (
+                                  <div key={tradeIdx} className="tooltip-trade">
+                                    <span className={`tooltip-trade-type ${trade.type}`}>
+                                      {trade.type === 'long' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                                    </span>
+                                    <span className="tooltip-trade-symbol">{trade.symbol}</span>
+                                    <span className={`tooltip-trade-pnl ${(trade.pnlDollar || 0) >= 0 ? 'positive' : 'negative'}`}>
+                                      {formatCurrency(trade.pnlDollar || 0)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
           )}

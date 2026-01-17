@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, Zap } from 'lucide-react';
+import { ArrowUp, ArrowDown, Zap, Search } from 'lucide-react';
+import { fetchTradingPairs, formatSymbolForBinance } from '../lib/binance';
+import { useLivePrice } from '../hooks/useLivePrice';
+import PriceChart from './PriceChart';
 import './PositionSizer.css';
 
 const PositionSizer = ({ rValue, onNewTrade }) => {
@@ -10,8 +13,44 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
   const [takeProfit, setTakeProfit] = useState('');
   const [leverage, setLeverage] = useState(1);
   const [riskMultiple, setRiskMultiple] = useState(1);
-  const [symbol, setSymbol] = useState('');
+  const [symbol, setSymbol] = useState('BTC/USDT');
   const [tradeDate, setTradeDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  
+  // Trading pairs state
+  const [tradingPairs, setTradingPairs] = useState([]);
+  const [filteredPairs, setFilteredPairs] = useState([]);
+  const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
+  const [symbolSearch, setSymbolSearch] = useState('');
+  const [loadingPairs, setLoadingPairs] = useState(true);
+  const [showChart, setShowChart] = useState(true);
+  const symbolInputRef = useRef(null);
+  const dropdownRef = useRef(null);
+  
+  // Live price for selected symbol
+  const { price: livePrice, loading: priceLoading } = useLivePrice(symbol);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showSymbolDropdown &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        symbolInputRef.current &&
+        !symbolInputRef.current.contains(event.target)
+      ) {
+        // Use setTimeout to allow dropdown item clicks to process first
+        setTimeout(() => {
+          setShowSymbolDropdown(false);
+        }, 100);
+      }
+    };
+
+    if (showSymbolDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSymbolDropdown]);
   
   const [calculations, setCalculations] = useState({
     positionSize: 0,
@@ -21,6 +60,44 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     stopLossPercent: 0,
     takeProfitPercent: 0,
   });
+
+  // Fetch trading pairs on mount
+  useEffect(() => {
+    const loadPairs = async () => {
+      setLoadingPairs(true);
+      try {
+        const pairs = await fetchTradingPairs();
+        setTradingPairs(pairs);
+        setFilteredPairs(pairs.slice(0, 20)); // Show top 20 initially
+      } catch (error) {
+        console.error('Error loading trading pairs:', error);
+      } finally {
+        setLoadingPairs(false);
+      }
+    };
+    loadPairs();
+  }, []);
+
+  // Filter pairs based on search
+  useEffect(() => {
+    if (!symbolSearch.trim()) {
+      setFilteredPairs(tradingPairs.slice(0, 20));
+    } else {
+      const searchLower = symbolSearch.toLowerCase();
+      const filtered = tradingPairs.filter(pair =>
+        pair.displaySymbol.toLowerCase().includes(searchLower) ||
+        pair.baseAsset.toLowerCase().includes(searchLower)
+      ).slice(0, 20);
+      setFilteredPairs(filtered);
+    }
+  }, [symbolSearch, tradingPairs]);
+
+  // Auto-fill current price when symbol changes and live price is available
+  useEffect(() => {
+    if (livePrice && !openPrice) {
+      setOpenPrice(livePrice.toFixed(2));
+    }
+  }, [livePrice, openPrice]);
 
   useEffect(() => {
     if (openPrice && stopLoss && rValue) {
@@ -78,6 +155,13 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     }
   }, [openPrice, stopLoss, takeProfit, leverage, rValue, riskMultiple, tradeType]);
 
+  const handleSymbolSelect = (selectedPair) => {
+    setSymbol(selectedPair.displaySymbol);
+    setSymbolSearch('');
+    // Close dropdown immediately
+    setShowSymbolDropdown(false);
+  };
+
   const handleOpenTrade = () => {
     if (!symbol || !openPrice || !stopLoss) {
       alert('Please fill in Symbol, Open Price, and Stop Loss');
@@ -120,12 +204,30 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
           <h2>Place Trade</h2>
           <p className="subtitle">Calculate position size and open a trade</p>
         </div>
-        <div className="risk-badge">
-          <span className="risk-label">Risking</span>
-          <span className="risk-amount">${(rValue * riskMultiple).toFixed(2)}</span>
-          <span className="risk-r">{riskMultiple}R</span>
+        <div className="header-right">
+          {symbol && (
+            <button
+              className="chart-toggle-btn"
+              onClick={() => setShowChart(!showChart)}
+              title={showChart ? 'Hide chart' : 'Show chart'}
+            >
+              {showChart ? 'Hide Chart' : 'Show Chart'}
+            </button>
+          )}
+          <div className="risk-badge">
+            <span className="risk-label">Risking</span>
+            <span className="risk-amount">${(rValue * riskMultiple).toFixed(2)}</span>
+            <span className="risk-r">{riskMultiple}R</span>
+          </div>
         </div>
       </div>
+
+      {/* Price Chart - Toggleable */}
+      {showChart && symbol && (
+        <div className="chart-section">
+          <PriceChart symbol={symbol} height={150} />
+        </div>
+      )}
 
       {/* Trade Type Toggle */}
       <div className="trade-type-h">
@@ -151,14 +253,67 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
         <div className="form-section">
           <h4 className="section-title">Trade Info</h4>
           <div className="input-row-h">
-            <div className="input-group-h">
+            <div className="input-group-h symbol-input-group">
               <label>Symbol</label>
-              <input
-                type="text"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="BTC, ETH..."
-              />
+              <div className="symbol-input-wrapper">
+                <Search size={16} className="search-icon" />
+                <input
+                  ref={symbolInputRef}
+                  type="text"
+                  value={symbolSearch || symbol}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSymbolSearch(value);
+                    // If user types a valid format, set symbol
+                    if (value && value.length >= 2) {
+                      // Convert to display format if needed
+                      const displayFormat = value.includes('/') 
+                        ? value.toUpperCase() 
+                        : value.length > 4 && value.toUpperCase().endsWith('USDT')
+                        ? `${value.slice(0, -4).toUpperCase()}/USDT`
+                        : `${value.toUpperCase()}/USDT`;
+                      setSymbol(displayFormat);
+                    } else if (!value) {
+                      setSymbol('');
+                    }
+                    if (!showSymbolDropdown && value) setShowSymbolDropdown(true);
+                  }}
+                  onFocus={() => {
+                    if (symbolSearch || symbol) setShowSymbolDropdown(true);
+                  }}
+                  placeholder="Search trading pair (e.g., BTC/USDT)..."
+                  className="symbol-input"
+                />
+                {livePrice && symbol && (
+                  <div className="live-price-badge">
+                    {priceLoading ? (
+                      <span className="price-loading">...</span>
+                    ) : (
+                      <span className="price-value">${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
+                    )}
+                  </div>
+                )}
+                {showSymbolDropdown && (
+                  <div ref={dropdownRef} className="symbol-dropdown">
+                    {loadingPairs ? (
+                      <div className="dropdown-loading">Loading pairs...</div>
+                    ) : filteredPairs.length === 0 ? (
+                      <div className="dropdown-empty">No pairs found</div>
+                    ) : (
+                      filteredPairs.map((pair) => (
+                        <div
+                          key={pair.symbol}
+                          className="dropdown-item"
+                          onClick={() => handleSymbolSelect(pair)}
+                        >
+                          <span className="pair-symbol">{pair.displaySymbol}</span>
+                          <span className="pair-base">{pair.baseAsset}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="input-group-h">
               <label>Date</label>

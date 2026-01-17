@@ -1,0 +1,12 @@
+.tradingview-chart-container {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+}
+
+.tradingview-chart {
+  width: 100%;
+  min-height: 400px;
+}

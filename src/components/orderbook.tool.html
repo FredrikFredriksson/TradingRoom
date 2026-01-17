@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Realtime Order Book Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ccxt@latest/dist/ccxt.browser.js"></script>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0c1a32;
+            color: azure;
+        }
+
+        #chart {
+            margin: 20px;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        .bid-line {
+            stroke: #1BC5BF;
+        }
+
+        .ask-line {
+            stroke: #F64E62;
+        }
+    </style>
+</head>
+
+<body>
+    <select id="symbol-select" name="symbol" value="BTC/USDT">
+        <option value="BTC/USDT">BTC/USDT</option>
+        <option value="ETH/USDT">ETH/USDT</option>
+        <option value="LTC/USDT">LTC/USDT</option>
+        <option value="XRP/USDT">XRP/USDT</option>
+        <option value="BCH/USDT">BCH/USDT</option>
+        <option value="BNB/USDT">BNB/USDT</option>
+        <option value="EOS/USDT">EOS/USDT</option>
+        <option value="XLM/USDT">XLM/USDT</option>
+        <option value="ADA/USDT">ADA/USDT</option>
+        <option value="SOL/USDT">SOL/USDT</option>
+        <option value="DOGE/USDT">DOGE/USDT</option>
+        <option value="XMR/USDT">XMR/USDT</option>
+        <option value="TRX/USDT">TRX/USDT</option>
+    </select>
+
+    <select id="range-select" value="0.002">
+        <option value="0.002">20 bps</option>
+        <option value="0.004">40 bps</option>
+        <option value="0.006">60 bps</option>
+        <option value="0.008">80 bps</option>
+        <option value="0.01">100 bps</option>
+        <option value="0.012">120 bps</option>
+        <option value="0.014">140 bps</option>
+        <option value="0.016">160 bps</option>
+        <option value="0.018">180 bps</option>
+        <option value="0.02">200 bps</option>
+        <option value="0.03">300 bps</option>
+        <option value="0.04">400 bps</option>
+        <option value="0.05">5 %</option>
+        <option value="0.1">10 %</option>
+    </select>
+
+    <!-- Container for the chart -->
+    <div id="chart"></div>
+
+    <!-- Include the script -->
+    <script>
+
+        // Set up SVG dimensions and margins
+        const margin = { top: 20, right: 30, bottom: 30, left: 60 },
+            width = 900 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        // Append SVG to the chart div
+        const svg = d3.select('#chart')
+            .append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Initialize scales
+        const x = d3.scaleLinear().range([0, width]);
+        const y = d3.scaleLinear().range([height, 0]);
+
+        // Initialize axes
+        const xAxis = svg.append('g')
+            .attr('transform', `translate(0,${height})`);
+        const yAxis = svg.append('g');
+
+        // Line generators
+        const bidLine = d3.line()
+            .x(d => x(d.price))
+            .y(d => y(d.cumVolume));
+
+        const askLine = d3.line()
+            .x(d => x(d.price))
+            .y(d => y(d.cumVolume));
+
+        // **Area generators for filling under the lines**
+        const bidArea = d3.area()
+            .x(d => x(d.price))
+            .y0(height) // Start from the bottom (x-axis)
+            .y1(d => y(d.cumVolume));
+
+        const askArea = d3.area()
+            .x(d => x(d.price))
+            .y0(height)
+            .y1(d => y(d.cumVolume));
+
+        // Paths for bids and asks areas
+        const bidAreaPath = svg.append('path')
+            .attr('class', 'area bid-area')
+            .style('fill', '#1BC5BF')
+            .style('opacity', 0.3);
+
+        const askAreaPath = svg.append('path')
+            .attr('class', 'area ask-area')
+            .style('fill', '#F64E62')
+            .style('opacity', 0.3);
+
+        // Paths for bids and asks lines (ensure these are on top of areas)
+        const bidPath = svg.append('path')
+            .attr('class', 'line bid-line');
+
+        const askPath = svg.append('path')
+            .attr('class', 'line ask-line');
+
+        // Function to generate random data (simulate realtime updates)
+        function generateData() {
+            const midPrice = 100;
+            const levels = 25;
+
+            const bids = [];
+            const asks = [];
+
+            // Generate bids
+            for (let i = levels; i > 0; i--) {
+                const price = midPrice - i - Math.random();
+                const volume = Math.random() * 10 + 1;
+                bids.push({ price, volume });
+            }
+
+            // Generate asks
+            for (let i = 1; i <= levels; i++) {
+                const price = midPrice + i + Math.random();
+                const volume = Math.random() * 10 + 1;
+                asks.push({ price, volume });
+            }
+
+            // Sort bids descending and asks ascending
+            bids.sort((a, b) => b.price - a.price);
+            asks.sort((a, b) => a.price - b.price);
+
+            // Calculate cumulative volume
+            let cumVolume = 0;
+            bids.forEach(d => {
+                cumVolume += d.volume;
+                d.cumVolume = cumVolume;
+            });
+
+            cumVolume = 0;
+            asks.forEach(d => {
+                cumVolume += d.volume;
+                d.cumVolume = cumVolume;
+            });
+
+            return { bids, asks };
+        }
+
+        // Function to update the chart
+        function update(data) {
+            // Combine all prices for x-axis domain
+            const allPrices = data.bids.concat(data.asks).map(d => d.price);
+
+            const midPrice = 0.5 * (data.bids[0].price + data.asks[0].price);
+            let minPrice = d3.min(allPrices);
+            let maxPrice = d3.max(allPrices);
+            if (midPrice - minPrice < maxPrice - midPrice) {
+                x.domain([minPrice, 2 * midPrice - minPrice]);
+            } else {
+                x.domain([2 * midPrice - maxPrice, maxPrice]);
+            }
+            // Update scales
+            const bpsWidth = Number(window.orderbookRange);
+            x.domain([(1 - bpsWidth) * midPrice, (1 + bpsWidth) * midPrice]);
+            y.domain([0, d3.max(data.bids.filter(d => d.price > (1 - bpsWidth) * midPrice).slice(-1).concat(data.asks.filter(d => d.price < (1 + bpsWidth) * midPrice).slice(-1)), d => d.cumVolume)]);
+
+            // Update axes
+            xAxis.transition().duration(100).call(d3.axisBottom(x));
+            yAxis.transition().duration(100).call(d3.axisLeft(y));
+
+            // Update bid area
+            bidAreaPath
+                .datum(data.bids)
+                .transition()
+                .duration(100)
+                .attr('d', bidArea);
+
+            // Update ask area
+            askAreaPath
+                .datum(data.asks)
+                .transition()
+                .duration(100)
+                .attr('d', askArea);
+
+            // Update bid line
+            bidPath
+                .datum([{ price: data.bids[0].price, cumVolume: 0 }, ...data.bids])
+                .transition()
+                .duration(100)
+                .attr('d', bidLine);
+
+            // Update ask line
+            askPath
+                .datum([{ price: data.asks[0].price, cumVolume: 0 }, ...data.asks])
+                .transition()
+                .duration(100)
+                .attr('d', askLine);
+        }
+
+        // Initial data load
+        let orderBookData = generateData();
+        update(orderBookData);
+
+        // Simulate realtime updates every 3 seconds
+        /*
+        setInterval(() => {
+            orderBookData = generateData();
+            update(orderBookData);
+        }, 500);
+        */
+        const updateOrderbook = (orderbook) => {
+            const { bids, asks } = orderbook;
+            const bidData = bids.slice(0, 1900).map((d, i, arr) => ({ price: d[0], volume: d[0] * d[1] })).map((d, i, arr) => (d.cumVolume = d.volume + (i > 0 ? arr[i - 1].cumVolume : 0), d));
+            const askData = asks.slice(0, 1900).map((d, i, arr) => ({ price: d[0], volume: d[0] * d[1] })).map((d, i, arr) => (d.cumVolume = d.volume + (i > 0 ? arr[i - 1].cumVolume : 0), d));
+            update({ bids: bidData, asks: askData });
+        }
+        async function updateSymbol(exchange, newSymbol, oldSymbol) {
+            if (oldSymbol) {
+                window.symbolChangeQ=true;
+                //const orderbook = await exchange.unWatchOrderBook(oldSymbol);
+                try{await exchange.close();}catch(e){console.log(e)}
+                //window.exchange = null;
+                //window.exchange = new ccxt.pro.binance({});
+                //await exchange.sleep(500);
+                window.symbolChangeQ=false;
+            }
+            if (newSymbol) {
+                const symbols = [newSymbol];
+                while (symbols[0]==window.orderbookSymbol) {
+                    const orderbook = await window.exchange.watchOrderBookForSymbols(symbols,2000);
+                    //updateOrderbook(orderbook);
+                    if(orderbook['symbol']==window.orderbookSymbol) updateOrderbook(orderbook);
+                    //console.log(orderbook['symbol'], orderbook['asks'].slice(-1)[0], orderbook['bids'].slice(-1)[0]);
+                }
+            }
+        }
+        async function updateTickers(exchange) {
+            const tickers = await exchange.fetchTickers();
+            //console.log(tickers);
+            const now=Date.now();
+            const newOptions = Object.values(tickers).filter(k => k.symbol.endsWith('/USDT')&&now-k.timestamp<300_000).toSorted((a,b)=>a.symbol.localeCompare(b.symbol)).reduce((acc, value) => acc + `<option value="${value.symbol}">${value.symbol}</option>`, '');
+					document.getElementById("symbol-select").innerHTML = newOptions;
+        }
+
+        window.orderbookSymbol = document.getElementById("symbol-select").value;
+        window.orderbookRange = document.getElementById("range-select").value;
+        window.symbolChangeQ=false;
+        console.log(window.orderbookSymbol, window.orderbookRange);
+        window.exchange = new ccxt.pro.binance({});
+        updateTickers(window.exchange);
+
+        updateSymbol(window.exchange, window.orderbookSymbol);
+        window.onclick = async (event) => {
+            const target = event.target;
+
+            console.log(target.tagName, target.id);
+            const id = target.id;
+            if (!id) return;
+            let postData = {};
+            let data;
+            if (id == "symbol-select") {
+                window.unWatchSymbol = window.orderbookSymbol;
+                window.orderbookSymbol = document.getElementById("symbol-select").value;
+                console.log(window.orderbookSymbol);
+                updateSymbol(window.exchange, window.orderbookSymbol, window.unWatchSymbol);
+            }
+            if (id == "range-select") {
+                window.orderbookRange = document.getElementById("range-select").value;
+
+            }
+        }
+    </script>
+</body>
+
+</html>
