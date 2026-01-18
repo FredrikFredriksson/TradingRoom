@@ -109,7 +109,7 @@ const Orderbook = ({ symbol = 'BTC/USDT' }) => {
       if (!orderbookData || !orderbookData.bids || !orderbookData.asks || !chartElementsRef.current) return;
 
       const { bids, asks } = orderbookData;
-      const { x, y, width, height, xAxis, yAxis, bidArea, askArea, bidLine, askLine, bidAreaPath, askAreaPath, bidPath, askPath } = chartElementsRef.current;
+      const { x, y, xAxis, yAxis, bidArea, askArea, bidLine, askLine, bidAreaPath, askAreaPath, bidPath, askPath } = chartElementsRef.current;
 
       // Process bids exactly as in original: volume = price * quantity, then calculate cumulative
       const bidData = bids

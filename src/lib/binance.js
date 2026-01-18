@@ -68,6 +68,61 @@ export async function fetchCurrentPrice(symbol) {
 }
 
 /**
+ * Fetch 24h ticker (OHLC) for all or one symbol. Used for volatility / variance bootstrap.
+ * @param {string} [symbol] - Optional. e.g. 'BTCUSDT'. If omitted, returns all tickers.
+ * @returns {Promise<Object>} Map of symbol -> { open, high, low, close } or single object
+ */
+export async function fetch24hTickers(symbol = null) {
+  try {
+    const url = symbol
+      ? `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`
+      : 'https://api.binance.com/api/v3/ticker/24hr';
+    const response = await fetch(url);
+    const data = await response.json();
+    const map = {};
+    const mapOne = (t) => {
+      const o = parseFloat(t.open);
+      const h = parseFloat(t.high);
+      const l = parseFloat(t.low);
+      const c = parseFloat(t.lastPrice ?? t.close ?? t.last);
+      return { open: o, high: h, low: l, close: c };
+    };
+    if (Array.isArray(data)) {
+      data.forEach((t) => { map[t.symbol] = mapOne(t); });
+      return map;
+    }
+    return { [data.symbol]: mapOne(data) };
+  } catch (error) {
+    console.error('Error fetching 24h tickers:', error);
+    return {};
+  }
+}
+
+/**
+ * Create WebSocket for all symbols' ticker stream. Fires on each batch.
+ * @param {function} onUpdate - (Map<string, number>) => void, symbol -> last price
+ * @returns {WebSocket}
+ */
+export function createAllTickersWebSocket(onUpdate) {
+  const ws = new WebSocket('wss://stream.binance.com:9443/ws/!ticker@arr');
+  ws.onmessage = (event) => {
+    try {
+      const arr = JSON.parse(event.data);
+      const map = {};
+      arr.forEach((t) => {
+        if (t.s && t.c) map[t.s] = parseFloat(t.c);
+      });
+      onUpdate(map);
+    } catch (e) {
+      console.error('Error parsing all-tickers stream:', e);
+    }
+  };
+  ws.onerror = (e) => console.error('All-tickers WebSocket error:', e);
+  ws.onclose = () => {};
+  return ws;
+}
+
+/**
  * Fetch orderbook snapshot from Binance
  * @param {string} symbol - Trading pair symbol (e.g., 'BTCUSDT')
  * @param {number} limit - Number of price levels (default 20, max 5000)

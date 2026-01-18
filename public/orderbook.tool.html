@@ -177,7 +177,6 @@
         .orderbook-axis text {
             fill: var(--text-secondary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
             font-weight: 600;
             text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         }
@@ -185,11 +184,13 @@
         .orderbook-axis.x-axis text {
             fill: var(--accent-primary);
             opacity: 0.8;
+            font-size: min(14px, max(9px, calc(var(--chart-width, 600) / 55)));
         }
 
         .orderbook-axis.y-axis text {
             fill: var(--accent-blue);
             opacity: 0.9;
+            font-size: min(14px, max(9px, calc(var(--chart-height, 400) / 40)));
         }
 
         .orderbook-axis path,
@@ -325,6 +326,8 @@
         // Store dimensions and references for updates
         let chartWidth = width;
         let chartHeight = height;
+        chartContainer.style.setProperty('--chart-width', String(chartWidth));
+        chartContainer.style.setProperty('--chart-height', String(chartHeight));
         
         // Store SVG reference globally for resize handling
         window.orderbookSvg = svg;
@@ -468,6 +471,8 @@
                 const svgElement = d3.select('#chart svg');
                 svgElement.attr('viewBox', `0 0 ${chartWidth + margin.left + margin.right} ${chartHeight + margin.top + margin.bottom}`);
             }
+            chartContainer.style.setProperty('--chart-width', String(chartWidth));
+            chartContainer.style.setProperty('--chart-height', String(chartHeight));
 
             // Calculate mid price from best bid and best ask
             const bestBid = data.bids[0];
@@ -513,9 +518,14 @@
             const nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
             const priceStep = Math.max(mag * nice, 1e-8);
             const xStart = Math.ceil(minPrice / priceStep) * priceStep;
-            const xTickValues = [];
+            let xTickValues = [];
             for (let v = xStart; v <= maxPrice; v += priceStep) xTickValues.push(v);
-            if (xTickValues.length < 2) xTickValues.length = 0; // fall back to D3's ticks
+            const maxXTicks = Math.max(3, Math.floor(chartWidth / 90));
+            if (xTickValues.length < 2) xTickValues = [];
+            else if (xTickValues.length > maxXTicks) {
+                const step = Math.ceil(xTickValues.length / maxXTicks);
+                xTickValues = xTickValues.filter((_, i) => i % step === 0);
+            }
 
             // Update mid-price line
             const midPriceX = x(midPrice);
@@ -529,7 +539,8 @@
             gridGroup.selectAll('.grid-line').remove();
             
             // Horizontal grid lines (volume levels)
-            const yTicks = y.ticks(6);
+            const yTickCount = Math.max(3, Math.floor(chartHeight / 50));
+            const yTicks = y.ticks(yTickCount);
             yTicks.forEach(tick => {
                 gridGroup.append('line')
                     .attr('class', 'grid-line')
@@ -544,7 +555,7 @@
             });
             
             // Vertical grid lines (price levels)
-            const xTicks = xTickValues.length >= 2 ? xTickValues : x.ticks(8);
+            const xTicks = xTickValues.length >= 2 ? xTickValues : x.ticks(maxXTicks);
             xTicks.forEach(tick => {
                 gridGroup.append('line')
                     .attr('class', 'grid-line')
@@ -562,7 +573,7 @@
                 const fmt = priceStep < 0.0001 ? (v) => v.toFixed(6) : priceStep < 0.01 ? (v) => v.toFixed(4) : priceStep < 1 ? (v) => v.toFixed(3) : (v) => d3.format(',.2f')(v);
                 const axis = d3.axisBottom(x).tickFormat(fmt);
                 if (xTickValues.length >= 2) axis.tickValues(xTickValues);
-                else axis.ticks(8);
+                else axis.ticks(maxXTicks);
                 return axis;
             };
             const yAxisFn = () => d3.axisLeft(y)
@@ -572,7 +583,7 @@
                     if (d >= 1e3) return (d / 1e3).toFixed(1) + 'K';
                     return d3.format(',.0f')(d);
                 })
-                .ticks(6);
+                .ticks(yTickCount);
             if (useTransition) {
                 xAxis.transition().duration(100).ease(d3.easeCubicOut).call(xAxisFn());
                 yAxis.transition().duration(100).ease(d3.easeCubicOut).call(yAxisFn());
@@ -600,12 +611,17 @@
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                // Re-trigger update with current data if available
-                if (window.lastOrderbookData) {
-                    update(window.lastOrderbookData);
-                }
+                if (window.lastOrderbookData) update(window.lastOrderbookData);
             }, 250);
         });
+        // When embedded in an iframe, the iframe can resize without firing window.resize — observe #chart
+        const resizeObserver = new ResizeObserver(() => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (window.lastOrderbookData) update(window.lastOrderbookData);
+            }, 100);
+        });
+        resizeObserver.observe(chartContainer);
         
         // Initial data load - will be replaced by real data
         // let orderBookData = generateData();

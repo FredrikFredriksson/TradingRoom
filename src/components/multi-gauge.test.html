@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vertical Multi-Input Gauge with Multiline Labels</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ccxt@latest/dist/ccxt.browser.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 20px;
+            background-color: #0c1a32;
+            color: azure;
+        }
+       
+        .gauge-container {
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .gauge-label {
+            margin-top: 2px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .gauge-value {
+            font-size: 14px;
+        }
+
+        .gauge-text {
+            font-size: 12px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Crypto 15-minutes Exponential Moving Average Volatility</h1>
+    <div id="gauges"></div>
+    <button onclick="updateGauges()">Update Gauges</button>
+
+    <!-- Include D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script>
+        // Configuration
+        const gaugeConfig = {
+            width: 40,          // Width of each gauge
+            height: 300,        // Height of each gauge
+            ledCount: 30,       // Number of LEDs per gauge
+            ledSpacing: 2,      // Spacing between LEDs
+            maxValue:2.0,       // Maximum value for the gauge
+            movingSeconds: 100,
+            inputData: [        // Initial input values (0 to 1)
+                { label: 'BTC', value: 0.2 },
+                { label: 'ETH', value: 0.5 },
+                { label: 'XRP', value: 0.8 },
+                { label: 'BNB', value: 0.8 },
+                { label: 'SOL', value: 0.8 },
+                { label: 'ADA', value: 0.8 },
+                { label: 'BONK', value: 0.8 },
+                { label: 'TRX', value: 0.8 },
+                { label: 'DOGE', value: 0.8 },
+                { label: 'PEPE', value: 0.8 },
+                { label: 'FLOKI', value: 0.8 },
+                { label: 'PROS', value: 0.8 },
+                { label: 'CTXC', value: 0.8 },
+                { label: 'XLM', value: 0.8 },
+                { label: 'XTZ', value: 0.8 },
+                { label: 'FARM', value: 0.8 },
+                { label: 'USTC', value: 0.8 },
+                { label: 'HBAR', value: 0.8 },
+                { label: 'DGB', value: 0.8 },
+                { label: 'LTC', value: 0.8 },
+            ],
+        };
+        gaugeConfig.inputData.sort((a,b)=>a.label.localeCompare(b.label));
+        // Function to create the gauges
+        function createGauges() {
+            const gaugesDiv = d3.select('#gauges');
+
+            // Remove existing gauges if any
+            gaugesDiv.selectAll('.gauge-container').remove();
+
+            gaugeConfig.inputData.forEach((data, index) => {
+                // Create a container for each gauge
+                const gaugeContainer = gaugesDiv.append('div')
+                    .attr('class', 'gauge-container');
+
+                // Add the SVG for the gauge
+                const svg = gaugeContainer.append('svg')
+                    .attr('width', gaugeConfig.width)
+                    .attr('height', gaugeConfig.height);
+
+                // Calculate LED properties
+                const ledHeight = (gaugeConfig.height - (gaugeConfig.ledCount - 1) * gaugeConfig.ledSpacing) / gaugeConfig.ledCount;
+
+                // Create a color scale from green to red
+                //"#C50B21", "#F64E62", "#FB9EA9", "#DCDCDC", "#69DDD9", "#1BC5BF", "#00827D"
+                const colorScale = d3.scaleLinear()
+                    .domain([0, 0.5*(gaugeConfig.ledCount-1), 0.9*(gaugeConfig.ledCount - 1), gaugeConfig.ledCount - 1])
+                    .range(["#1BC5BF", "#1BC5BF", "#F64E62", "#F64E62"]);
+
+                // Create the LEDs
+                const leds = svg.selectAll('rect')
+                    .data(d3.range(gaugeConfig.ledCount))
+                    .enter()
+                    .append('rect')
+                    .attr('x', 0)
+                    .attr('y', (d, i) => gaugeConfig.height - (i + 1) * (ledHeight + gaugeConfig.ledSpacing))
+                    .attr('width', gaugeConfig.width)
+                    .attr('height', ledHeight)
+                    .attr('fill', (d, i) => colorScale(i))
+                    .attr('opacity', 0.2);
+
+                // Function to update the LEDs based on the value
+                function updateGauge(value) {
+                    const litCount = Math.round(Math.tanh(value/gaugeConfig.maxValue) * gaugeConfig.ledCount);
+                    leds.attr('opacity', (d, i) => i < litCount ? 1 : 0.2);
+                }
+
+                // Initial update
+                updateGauge(data.value);
+
+                // Store the update function for later use
+                data.updateGauge = updateGauge;
+
+                // **Add a multiline label below the gauge**
+                const labelContainer = gaugeContainer.append('div')
+                    .attr('class', 'gauge-label');
+
+                // **Add the value above the label**
+                labelContainer.append('div')
+                    .attr('class', 'gauge-value')
+                    .text(`${(data.value * 100).toFixed(0)}%`);
+
+                // **Add the label text below the value**
+                labelContainer.append('div')
+                    .attr('class', 'gauge-text')
+                    .text(data.label);
+
+                // Store the label elements for updating later
+                data.valueElement = labelContainer.select('.gauge-value');
+                data.labelElement = labelContainer.select('.gauge-text');
+            });
+        }
+
+        // Function to update the gauges with new random values
+        function updateGauges() {
+            gaugeConfig.inputData.forEach(data => {
+                // Generate a new random value between 0 and 1
+                //const newValue = Math.random();
+                //data.value = newValue;
+
+                // Update the gauge display
+                data.updateGauge(data.value);
+
+                // **Update the value displayed above the label**
+                data.valueElement.text(`${(data.value * 100).toFixed(0)}%`);
+
+                // **Label text remains the same, but you could update it if needed**
+                // data.labelElement.text(data.label);
+            });
+        }
+
+        // Initial creation of the gauges
+        createGauges();
+
+        window.exchange = new ccxt.pro.binance({});
+
+
+        async function watchTickers() {
+            const tickers = await window.exchange.fetchTickers();
+            console.log(tickers);
+            gaugeConfig.inputData.forEach(data => {
+                data.ticker=data.label+"/USDT";
+                data.lastPrice = tickers[data.ticker].last;
+                data.variance =365*(Math.log(tickers[data.ticker].open/tickers[data.ticker].high)*Math.log(tickers[data.ticker].close/tickers[data.ticker].high)+Math.log(tickers[data.ticker].open/tickers[data.ticker].low)*Math.log(tickers[data.ticker].close/tickers[data.ticker].low));
+            });
+            while (true) {
+                const tickers = await window.exchange.watchTickers();
+                gaugeConfig.inputData.forEach(data => {
+                    const last=tickers[data.ticker]?.last??data.lastPrice;
+                    const lr = Math.log(last / data.lastPrice);
+                    const factor=2/(gaugeConfig.movingSeconds+1);
+                    data.variance = factor *8760 * 3600 * lr * lr + data.variance * (1-factor);
+                    data.lastPrice = last;
+                    data.value = Math.sqrt( data.variance);
+                });
+                updateGauges();
+            }
+
+        }
+        watchTickers();
+        // Optional: Update gauges every 5 seconds
+        // setInterval(updateGauges, 5000);
+    </script>
+
+</body>
+
+</html>

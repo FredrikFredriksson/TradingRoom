@@ -5,6 +5,8 @@ import 'gridstack/dist/gridstack.min.css';
 import PriceCard from './PriceCard';
 import TradingViewWidget from './TradingViewWidget';
 import OrderbookTool from './OrderbookTool';
+import StackedOrderbookTool from './StackedOrderbookTool';
+import MultiGauge from './MultiGauge';
 import './Analytics.css';
 
 const Analytics = () => {
@@ -27,14 +29,15 @@ const Analytics = () => {
       copy('data-gs-min-h', 'gs-min-h');
     });
 
-    // Match leverage-gridstack logic: cellHeight 'auto', responsive columnOpts, animate on,
-    // no float/disableOneColumnMode. Smooth drag/resize and breakpoint transitions.
-    gridInstanceRef.current = GridStack.init({
+    // Match leverage-gridstack logic: cellHeight 'auto', responsive columnOpts, animate on.
+    // float: true so items pack upward and fit the grid after resize/drag.
+    const grid = GridStack.init({
       column: 12,
       cellHeight: 'auto',
       margin: 5,
       minRow: 1,
       animate: true,
+      float: true,
       columnOpts: {
         breakpointForWindow: true,
         breakpoints: [
@@ -46,7 +49,7 @@ const Analytics = () => {
         ]
       },
       resizable: {
-        handles: 'e, se, s, sw, w',
+        handles: 'se',
         autoHide: false
       },
       draggable: {
@@ -54,6 +57,21 @@ const Analytics = () => {
         scroll: true
       }
     }, gridRef.current);
+    gridInstanceRef.current = grid;
+
+    // Iframes capture pointer events, so mouseup never reaches the parent and resize/drag
+    // never ends — you have to click again. Disable pointer-events on all iframes during
+    // resize/drag so release always lands on the grid and the interaction ends smoothly.
+    const disableIframePointers = () => {
+      gridEl.querySelectorAll('iframe').forEach((f) => { f.style.pointerEvents = 'none'; });
+    };
+    const enableIframePointers = () => {
+      gridEl.querySelectorAll('iframe').forEach((f) => { f.style.pointerEvents = ''; });
+    };
+    grid.on('resizestart', disableIframePointers);
+    grid.on('resizestop', enableIframePointers);
+    grid.on('dragstart', disableIframePointers);
+    grid.on('dragstop', enableIframePointers);
 
     return () => {
       if (gridInstanceRef.current) {
@@ -73,7 +91,7 @@ const Analytics = () => {
       </div>
 
       <div className="analytics-grid grid-stack" ref={gridRef}>
-        {/* Price Card - Small BTC graph */}
+        {/* Price Card - Small BTC graph. min ~450x200: 4 cols x 2 rows in grid units. Resize only from SE (grow diagonally). */}
         <div 
           className="grid-stack-item" 
           data-gs-x="0"
@@ -81,7 +99,7 @@ const Analytics = () => {
           data-gs-w="5"
           data-gs-h="4"
           data-gs-min-w="4"
-          data-gs-min-h="3"
+          data-gs-min-h="2"
         >
           <div className="grid-stack-item-content widget-wrapper">
             <div className="widget-header">
@@ -109,21 +127,57 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Orderbook */}
+        {/* Volatility Gauges */}
         <div 
           className="grid-stack-item" 
           data-gs-x="0"
           data-gs-y="4"
-          data-gs-w="12"
-          data-gs-h="7"
-          data-gs-min-w="10"
-          data-gs-min-h="6"
+          data-gs-w="4"
+          data-gs-h="3"
+          data-gs-min-w="3"
+          data-gs-min-h="2"
+        >
+          <div className="grid-stack-item-content widget-wrapper">
+            <div className="widget-header">
+              <span>Volatility Gauges</span>
+            </div>
+            <MultiGauge />
+          </div>
+        </div>
+
+        {/* Orderbook Tool - min ~988x518 (7x4 grid units). X-axis ticks/numbers scale with size. */}
+        <div 
+          className="grid-stack-item" 
+          data-gs-x="4"
+          data-gs-y="4"
+          data-gs-w="10"
+          data-gs-h="6"
+          data-gs-min-w="7"
+          data-gs-min-h="4"
         >
           <div className="grid-stack-item-content widget-wrapper">
             <div className="widget-header">
               <span>Orderbook Tool</span>
             </div>
             <OrderbookTool />
+          </div>
+        </div>
+
+        {/* Stacked Orderbook (Binance, Kraken, Coinbase) */}
+        <div 
+          className="grid-stack-item" 
+          data-gs-x="0"
+          data-gs-y="11"
+          data-gs-w="8"
+          data-gs-h="4"
+          data-gs-min-w="4"
+          data-gs-min-h="3"
+        >
+          <div className="grid-stack-item-content widget-wrapper">
+            <div className="widget-header">
+              <span>Stacked Orderbook (Binance, Kraken, Coinbase)</span>
+            </div>
+            <StackedOrderbookTool />
           </div>
         </div>
       </div>

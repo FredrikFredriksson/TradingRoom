@@ -1,0 +1,124 @@
+/* MultiGauge - Volatility gauges. Uses project CSS variables. */
+
+.multi-gauge {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.multi-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.multi-gauge-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 2px 0;
+}
+
+.multi-gauge-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  opacity: 0.85;
+  margin: 0;
+}
+
+.multi-gauge-period {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.multi-gauge-period-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.multi-gauge-period-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.multi-gauge-period-btn.active {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.multi-gauge-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  align-items: flex-end;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.multi-gauge-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.multi-gauge-svg {
+  display: block;
+}
+
+.multi-gauge-label {
+  margin-top: 6px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.multi-gauge-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.multi-gauge-symbol {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.multi-gauge-loading,
+.multi-gauge-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.multi-gauge-error {
+  color: var(--color-danger);
+}
