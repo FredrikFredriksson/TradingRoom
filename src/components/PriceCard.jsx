@@ -127,16 +127,16 @@ const PriceCard = () => {
     const chartRange = chartMax - chartMin;
 
     const isUp = priceChange >= 0;
-    const chartColor = isUp ? '#10b981' : '#ef4444';
+    const chartColor = isUp ? '#2dd4bf' : '#f43f5e';
 
-    // Draw gradient
+    // Draw gradient - metallic green/red to match theme
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
     if (isUp) {
-      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
-      gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+      gradient.addColorStop(0, 'rgba(45, 212, 191, 0.2)');
+      gradient.addColorStop(1, 'rgba(20, 184, 166, 0)');
     } else {
-      gradient.addColorStop(0, 'rgba(239, 68, 68, 0.15)');
-      gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      gradient.addColorStop(0, 'rgba(244, 63, 94, 0.2)');
+      gradient.addColorStop(1, 'rgba(225, 29, 72, 0)');
     }
 
     // Draw area

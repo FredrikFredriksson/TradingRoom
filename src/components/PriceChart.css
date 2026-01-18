@@ -65,12 +65,12 @@
 
 .price-change.up {
   color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(45, 212, 191, 0.12);
 }
 
 .price-change.down {
   color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(244, 63, 94, 0.12);
 }
 
 .price-chart-canvas {

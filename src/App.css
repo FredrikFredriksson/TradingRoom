@@ -4,23 +4,25 @@
   position: relative;
 }
 
-/* Background Effect */
+/* Background Effect - dark blue/blue-black gradient */
 .app-bg {
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34, 211, 238, 0.05) 0%, transparent 40%),
-    radial-gradient(ellipse 40% 30% at 0% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
-    var(--bg-primary);
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(34, 211, 238, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 80%, rgba(56, 189, 248, 0.05) 0%, transparent 45%),
+    radial-gradient(ellipse 50% 40% at 0% 90%, rgba(45, 212, 191, 0.04) 0%, transparent 40%),
+    linear-gradient(180deg, #080e1a 0%, #050a12 45%, #03060c 100%);
   z-index: -1;
 }
 
 .app-container {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: 20px 32px;
-  min-height: 100vh;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 20px 16px;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -137,20 +139,30 @@
   text-align: center;
 }
 
-/* Main Content */
+/* Main Content – scrolls when grid/layout is tall (e.g. Analytics) */
 .main-content {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* Dashboard Layout */
 .dashboard-layout {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Analytics Layout */
+.analytics-layout {
+  width: 100%;
   max-width: 100%;
 }
 
 /* Trade Layout - Position Sizer */
 .trade-layout {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
 }
 
 /* Animation */
@@ -169,7 +181,7 @@
 
 .dashboard-left::-webkit-scrollbar-thumb {
   background: var(--border-default);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .dashboard-left::-webkit-scrollbar-thumb:hover {

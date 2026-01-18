@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trading Strategy Tearsheet</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Two-Column Layout */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .column {
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        .left-column {
+            flex: 1;
+            min-width: 480px;
+        }
+
+        .right-column {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        /* Data Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        table th, table td {
+            border: 1px solid #dddddd;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+            text-align: center;
+            color: black; /* Ensure header text is black */
+            text-shadow: none; /* Remove text shadow from header */
+        }
+
+        /* Heatmap Styles */
+        .heatmap-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            margin-bottom: 30px;
+        }
+        .heatmap {
+            table-layout: fixed;
+            width: 100%;
+            max-width: 100%;
+            font-size: 18px;
+        }
+        .heatmap thead th,
+        .heatmap thead td {
+            text-align: right;
+            background-color: #f2f2f2;
+            padding: 20px 6px;
+            font-size: 17px;
+            font-weight: bold;
+        }
+        .heatmap tbody td {
+            text-align: right;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: black;
+            font-size: 18px;
+            padding: 28px 6px;
+            height: 88px;
+            min-height: 88px;
+            box-sizing: border-box;
+            vertical-align: middle;
+        }
+        .heatmap tbody tr {
+            height: 88px;
+        }
+        .int-part {
+            display: inline-block;
+            text-align: right;
+            min-width: 20px;
+        }
+
+        .dec-part {
+            display: inline-block;
+            text-align: left;
+            min-width: 30px;
+        }
+
+        /* Charts */
+        .chart-container {
+            margin-bottom: 30px;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            .left-column, .right-column {
+                width: 100%;
+                page-break-inside: avoid;
+            }
+
+            .right-column {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Trading Strategy Tearsheet</h1>
+    <div class="container">
+        <!-- Left Column: Data Tables and Heatmap -->
+        <div class="column left-column">
+            <h2>Key Performance Metrics</h2>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Cumulative Return</td>
+                    <td id="cumulativeReturn">-</td>
+                </tr>
+                <tr>
+                    <td>Annualized Return</td>
+                    <td id="annualizedReturn">-</td>
+                </tr>
+                <tr>
+                    <td>Annualized Volatility</td>
+                    <td id="annualizedVolatility">-</td>
+                </tr>
+                <tr>
+                    <td>Sharpe Ratio</td>
+                    <td id="sharpeRatio">-</td>
+                </tr>
+                <tr>
+                    <td>Max Drawdown</td>
+                    <td id="maxDrawdown">-</td>
+                </tr>
+                <tr>
+                    <td>Sortino Ratio</td>
+                    <td id="sortinoRatio">-</td>
+                </tr>
+            </table>
+
+            <h2>Monthly Returns Heatmap</h2>
+            <div class="heatmap-wrapper">
+                <table id="monthlyReturnsTable" class="heatmap">
+                    <!-- Table content will be generated dynamically -->
+                </table>
+                <table id="monthlyReturnsTableFromLog" class="heatmap">
+                    <!-- Table content will be generated dynamically -->
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Charts -->
+        <div class="column right-column">
+            <h2>Cumulative Return Over Time</h2>
+            <div class="chart-container">
+                <canvas id="equityCurve"></canvas>
+            </div>
+
+            <h2>Drawdown Over Time</h2>
+            <div class="chart-container">
+                <canvas id="drawdownChart"></canvas>
+            </div>
+
+            <h2>Return Distribution</h2>
+            <div class="chart-container">
+                <canvas id="returnHistogram"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Code -->
+    <script>
+        // Generate 100 example returns
+        const returnSeries = [];
+        let currentDate = new Date('2022-01-01');
+        while (returnSeries.length < 1000) {
+            // Skip weekends
+            const dayOfWeek = currentDate.getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Sunday, 6 = Saturday
+                // Generate a random return between -0.02 and 0.02
+                const randomReturn = (Math.random() - 0.5) * 0.04; // -0.02 to 0.02
+
+                // Format the date as YYYY-MM-DD
+                const dateStr = currentDate.toISOString().split('T')[0];
+
+                returnSeries.push({ date: dateStr, return: randomReturn });
+            }
+
+            // Increment the date by one day
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Function to calculate metrics
+        function calculateMetrics(returns) {
+            const n = returns.length;
+            const cumulativeReturn = returns.reduce((acc, val) => acc * (1 + val.return), 1) - 1;
+            const averageReturn = returns.reduce((acc, val) => acc + val.return, 0) / n;
+            const annualizedReturn = Math.pow(1 + cumulativeReturn, 252 / n) - 1; // Assuming 252 trading days
+            const volatility = Math.sqrt(returns.map(r => Math.pow(r.return - averageReturn, 2)).reduce((a, b) => a + b) / (n - 1));
+            const annualizedVolatility = volatility * Math.sqrt(252);
+            const sharpeRatio = (annualizedReturn) / annualizedVolatility;
+
+            // Max Drawdown
+            let maxDrawdown = 0;
+            let peak = -Infinity;
+            let trough = Infinity;
+            let cumulativeReturns = [];
+            returns.reduce((acc, val) => {
+                acc = acc * (1 + val.return);
+                cumulativeReturns.push(acc);
+                return acc;
+            }, 1);
+            for (let i = 0; i < cumulativeReturns.length; i++) {
+                if (cumulativeReturns[i] > peak) {
+                    peak = cumulativeReturns[i];
+                    trough = cumulativeReturns[i];
+                }
+                if (cumulativeReturns[i] < trough) {
+                    trough = cumulativeReturns[i];
+                    const drawdown = (trough - peak) / peak;
+                    if (drawdown < maxDrawdown) {
+                        maxDrawdown = drawdown;
+                    }
+                }
+            }
+
+            // Sortino Ratio
+            const negativeReturns = returns.filter(r => r.return < 0);
+            const downsideDeviation = Math.sqrt(negativeReturns.map(r => Math.pow(r.return, 2)).reduce((a, b) => a + b, 0) / (n - 1));
+            const annualizedDownsideDeviation = downsideDeviation * Math.sqrt(252);
+            const sortinoRatio = annualizedReturn / annualizedDownsideDeviation;
+
+            return {
+                cumulativeReturn,
+                annualizedReturn,
+                annualizedVolatility,
+                sharpeRatio,
+                maxDrawdown,
+                sortinoRatio
+            };
+        }
+
+        // Function to create the monthly returns heatmap with aligned decimal points
+        function createMonthlyReturnsHeatmap(returns,tableId='monthlyReturnsTable') {
+            // Organize returns by year and month
+            const monthlyReturns = {};
+            returns.forEach(r => {
+                const date = new Date(r.date);
+                const year = date.getFullYear();
+                const month = date.getMonth(); // 0-11
+
+                if (!monthlyReturns[year]) {
+                    monthlyReturns[year] = { monthly: Array(12).fill(null), yearly: null, cumulative: 1 };
+                }
+
+                if (!monthlyReturns[year].monthly[month]) {
+                    monthlyReturns[year].monthly[month] = [];
+                }
+
+                monthlyReturns[year].monthly[month].push(r.return);
+            });
+
+            // Calculate monthly, yearly returns and running ITD
+            const years = Object.keys(monthlyReturns).sort((a, b) => a - b); // Sort ascending
+            let cumulativeITD = 1;
+            years.forEach(year => {
+                let yearlyReturn = 1;
+                monthlyReturns[year].monthly = monthlyReturns[year].monthly.map(monthlyData => {
+                    if (monthlyData) {
+                        const monthlyReturn = monthlyData.reduce((acc, val) => acc * (1 + val), 1) - 1;
+                        yearlyReturn *= (1 + monthlyReturn);
+                        return monthlyReturn;
+                    } else {
+                        return null;
+                    }
+                });
+                monthlyReturns[year].yearly = yearlyReturn - 1;
+                cumulativeITD *= (1 + monthlyReturns[year].yearly);
+                monthlyReturns[year].cumulativeITD = cumulativeITD - 1;
+            });
+
+            // Generate table
+            const table = document.getElementById(tableId);
+            table.innerHTML = '';
+
+            // Table header
+            const header = table.createTHead();
+            const headerRow = header.insertRow(0);
+            const months = ['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD', 'ITD'];
+            months.forEach((month, index) => {
+                const cell = headerRow.insertCell(index);
+                cell.innerHTML = `<strong>${month}</strong>`;
+            });
+
+            // Table body
+            const tbody = table.createTBody();
+            years.reverse();
+            years.forEach(year => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerHTML = `<strong>${year}</strong>`;
+                monthlyReturns[year].monthly.forEach((monthlyReturn, index) => {
+                    const cell = row.insertCell(index + 1);
+                    if (monthlyReturn !== null) {
+                        const percentReturn = (monthlyReturn * 100).toFixed(2);
+                        const formattedReturn = percentReturn + '%';
+
+                        // Split into integer and decimal parts
+                        const parts = percentReturn.split('.');
+                        const integerPart = parts[0];
+                        const decimalPart = '.' + (parts[1] || '00') + '%';
+
+                        // Set cell HTML with spans
+                        cell.innerHTML = `<span class="int-part">${integerPart}</span><span class="dec-part">${decimalPart}</span>`;
+                        cell.style.backgroundColor = getHeatmapColor(monthlyReturn);
+                    } else {
+                        cell.innerText = '-';
+                        cell.style.backgroundColor = '#f0f0f0';
+                    }
+                });
+                // Yearly return
+                const yearlyCell = row.insertCell(13);
+                const percentYearlyReturn = (monthlyReturns[year].yearly * 100).toFixed(2);
+                const formattedYearlyReturn = percentYearlyReturn + '%';
+
+                // Split into integer and decimal parts
+                const partsYear = percentYearlyReturn.split('.');
+                const integerPartYear = partsYear[0];
+                const decimalPartYear = '.' + (partsYear[1] || '00') + '%';
+
+                yearlyCell.innerHTML = `<span class="int-part">${integerPartYear}</span><span class="dec-part">${decimalPartYear}</span>`;
+                yearlyCell.style.backgroundColor = getHeatmapColor(monthlyReturns[year].yearly);
+
+                // Running ITD
+                const itdCell = row.insertCell(14);
+                const percentITDReturn = (monthlyReturns[year].cumulativeITD * 100).toFixed(2);
+                const formattedITDReturn = percentITDReturn + '%';
+
+                // Split into integer and decimal parts
+                const partsITD = percentITDReturn.split('.');
+                const integerPartITD = partsITD[0];
+                const decimalPartITD = '.' + (partsITD[1] || '00') + '%';
+
+                itdCell.innerHTML = `<span class="int-part">${integerPartITD}</span><span class="dec-part">${decimalPartITD}</span>`;
+                itdCell.style.backgroundColor = getHeatmapColor(monthlyReturns[year].cumulativeITD);
+            });
+        }
+		const templateColors = ["#C50B21", "#F64E62", "#FB9EA9", "#DCDCDC", "#69DDD9", "#1BC5BF", "#00827D"];
+		const coin360Colors = ["#9D2F29", "#BA4A45", "#DE7875", "#DCDCDC", "#8CBF84", "#5C8456", "#315C32"];
+		const themeColors = templateColors.map(color => color+'70');
+		const themeColor = (pct) => {
+			if (pct > 15) return themeColors[6];
+			if (pct > 5) return themeColors[5];
+			if (pct > 0.25) return themeColors[4];
+			if (pct > -0.25) return themeColors[3];
+			if (pct > -5) return themeColors[2];
+			if (pct > -15) return themeColors[1];
+			return themeColors[0];
+		};
+        // Function to get heatmap color based on return value
+        function getHeatmapColor(value) {
+            return themeColor(100*value);
+            // Map value between min and max to a color from red to green
+            const max = 0.1; // Adjust based on expected max/min returns
+            const min = -0.1;
+
+            let ratio = (value - min) / (max - min);
+            ratio = Math.max(0, Math.min(1, ratio)); // Clamp between 0 and 1
+
+            // Calculate red and green components
+            const red = Math.floor(255 * (1 - ratio));
+            const green = Math.floor(255 * ratio);
+            const blue = 0;
+
+            return `rgba(${red},${green},${blue},0.25)`;
+        }
+
+        // Populate Metrics
+        const metrics = calculateMetrics(returnSeries);
+
+        document.getElementById('cumulativeReturn').innerText = (metrics.cumulativeReturn * 100).toFixed(2) + '%';
+        document.getElementById('annualizedReturn').innerText = (metrics.annualizedReturn * 100).toFixed(2) + '%';
+        document.getElementById('annualizedVolatility').innerText = (metrics.annualizedVolatility * 100).toFixed(2) + '%';
+        document.getElementById('sharpeRatio').innerText = metrics.sharpeRatio.toFixed(2);
+        document.getElementById('maxDrawdown').innerText = (metrics.maxDrawdown * 100).toFixed(2) + '%';
+        document.getElementById('sortinoRatio').innerText = metrics.sortinoRatio.toFixed(2);
+
+        // Create Monthly Returns Heatmap
+        createMonthlyReturnsHeatmap(returnSeries);
+        createMonthlyReturnsHeatmap(returnSeries,'monthlyReturnsTableFromLog');
+        // Generate Charts
+        // Equity Curve
+        const cumulativeReturns = [];
+        const cumulativeDates = [];
+        returnSeries.reduce((acc, val) => {
+            acc = acc * (1 + val.return);
+            cumulativeReturns.push((acc - 1) * 100);
+            cumulativeDates.push(val.date);
+            return acc;
+        }, 1);
+
+        const equityCtx = document.getElementById('equityCurve').getContext('2d');
+        new Chart(equityCtx, {
+            type: 'line',
+            data: {
+                labels: cumulativeDates,
+                datasets: [{
+                    label: 'Cumulative Return (%)',
+                    data: cumulativeReturns,
+                    borderColor: 'green',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Cumulative Return (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Drawdown Chart
+        let peak = cumulativeReturns[0];
+        const drawdowns = cumulativeReturns.map(value => {
+            if (value > peak) peak = value;
+            const drawdown = ((value - peak) / peak) * 100;
+            return isNaN(drawdown) ? 0 : drawdown;
+        });
+
+        const drawdownCtx = document.getElementById('drawdownChart').getContext('2d');
+        new Chart(drawdownCtx, {
+            type: 'line',
+            data: {
+                labels: cumulativeDates,
+                datasets: [{
+                    label: 'Drawdown (%)',
+                    data: drawdowns,
+                    borderColor: 'red',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Drawdown (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Return Distribution Histogram
+        const histogramData = {};
+        returnSeries.forEach(r => {
+            const bucket = (r.return * 100).toFixed(1);
+            histogramData[bucket] = (histogramData[bucket] || 0) + 1;
+        });
+
+        const histogramLabels = Object.keys(histogramData).sort((a, b) => parseFloat(a) - parseFloat(b));
+        const histogramCounts = histogramLabels.map(label => histogramData[label]);
+
+        const histogramCtx = document.getElementById('returnHistogram').getContext('2d');
+        new Chart(histogramCtx, {
+            type: 'bar',
+            data: {
+                labels: histogramLabels,
+                datasets: [{
+                    label: 'Frequency',
+                    data: histogramCounts,
+                    backgroundColor: 'blue'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Return (%)'
+                        },
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 20
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    }
+                }
+            }});
+        </script>
+    </body>
+    </html>

@@ -12,54 +12,65 @@
 }
 
 :root {
-  /* Metallic Black Theme */
-  --bg-primary: #0a0a0b;
-  --bg-secondary: #111113;
-  --bg-tertiary: #18181b;
-  --bg-elevated: #1f1f23;
-  --bg-hover: #27272a;
+  /* Dark Blue / Blue-Black Theme */
+  --bg-primary: #050a12;
+  --bg-secondary: #080e1a;
+  --bg-tertiary: #0c1524;
+  --bg-elevated: #0f1a2e;
+  --bg-hover: #131f35;
   
-  /* Metallic Gradients */
-  --gradient-metallic: linear-gradient(145deg, #1a1a1d 0%, #0d0d0e 100%);
-  --gradient-card: linear-gradient(165deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
-  --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+  /* Metallic Gradients - dark blue tones */
+  --gradient-metallic: linear-gradient(145deg, #0c1524 0%, #050a12 50%, #03060c 100%);
+  --gradient-card: linear-gradient(165deg, rgba(34, 211, 238, 0.04) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 100%);
+  --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(34, 211, 238, 0.04) 50%, transparent 100%);
   
-  /* Accent Colors - Cyan/Blue focused */
+  /* Accent - Light blue (kept as requested) */
   --accent-primary: #22d3ee;       /* Cyan - Main accent */
   --accent-secondary: #06b6d4;     /* Darker cyan */
-  --accent-blue: #3b82f6;          /* Blue */
-  --accent-emerald: #10b981;       /* Emerald */
-  --accent-amber: #f59e0b;         /* Amber */
+  --accent-blue: #38bdf8;          /* Sky blue */
+  --accent-emerald: #2dd4bf;       /* Teal - fits blue */
+  --accent-amber: #fbbf24;         /* Amber */
   
-  /* Semantic Colors */
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  /* Metallic Success (green) - shiny, fits blue */
+  --color-success: #2dd4bf;
+  --color-success-bright: #5eead4;
+  --color-success-dark: #14b8a6;
+  --gradient-success: linear-gradient(180deg, #5eead4 0%, #2dd4bf 40%, #14b8a6 100%);
+  
+  /* Metallic Danger (red) - shiny, fits blue scheme */
+  --color-danger: #f43f5e;
+  --color-danger-bright: #fb7185;
+  --color-danger-dark: #e11d48;
+  --gradient-danger: linear-gradient(180deg, #fb7185 0%, #f43f5e 40%, #e11d48 100%);
+  
+  /* Semantic */
+  --color-warning: #fbbf24;
   --color-info: #22d3ee;
   
   /* Text Colors */
-  --text-primary: #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-primary: #f0f9ff;
+  --text-secondary: #bae6fd;
+  --text-muted: #94a3b8;
   
-  /* Border Colors */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-bright: rgba(255, 255, 255, 0.15);
+  /* Border Colors - blue tint */
+  --border-subtle: rgba(34, 211, 238, 0.08);
+  --border-default: rgba(34, 211, 238, 0.12);
+  --border-bright: rgba(34, 211, 238, 0.2);
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
-  --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.2);
-  --shadow-glow-blue: 0 0 40px rgba(59, 130, 246, 0.2);
-  --shadow-glow-emerald: 0 0 40px rgba(16, 185, 129, 0.2);
-  --shadow-glow-rose: 0 0 40px rgba(244, 63, 94, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 21, 41, 0.5);
+  --shadow-lg: 0 8px 30px rgba(0, 21, 41, 0.6);
+  --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.25);
+  --shadow-glow-blue: 0 0 40px rgba(56, 189, 248, 0.25);
+  --shadow-glow-emerald: 0 0 40px rgba(45, 212, 191, 0.25);
+  --shadow-glow-rose: 0 0 40px rgba(244, 63, 94, 0.25);
   
-  /* Border Radius - Squared */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  /* Border Radius - Square / minimal */
+  --radius-xs: 0;
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
 }
 
 html {
@@ -84,12 +95,12 @@ body {
 
 ::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
-  border-radius: 2px;
+  border-radius: 0;
   border: 2px solid var(--bg-secondary);
 }
 

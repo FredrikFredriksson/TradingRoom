@@ -71,8 +71,8 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.2);
   border-radius: var(--radius-md);
   color: var(--color-success);
 }
@@ -116,8 +116,8 @@
 }
 
 .balance-config {
-  border-color: rgba(16, 185, 129, 0.2);
-  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(45, 212, 191, 0.2);
+  background: rgba(45, 212, 191, 0.05);
 }
 
 .config-label {
@@ -221,7 +221,7 @@
 }
 
 .balance-config .value-edit input:focus {
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
 }
 
 @media (max-width: 900px) {

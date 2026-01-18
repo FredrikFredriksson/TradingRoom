@@ -195,8 +195,8 @@ const CandlestickChart = ({ symbol, height = 500 }) => {
       const y = padding.top + chartAreaHeight + volumeAreaHeight - barHeight;
       
       ctx.fillStyle = kline.close >= kline.open 
-        ? 'rgba(16, 185, 129, 0.3)' 
-        : 'rgba(239, 68, 68, 0.3)';
+        ? 'rgba(45, 212, 191, 0.35)' 
+        : 'rgba(244, 63, 94, 0.35)';
       ctx.fillRect(x, y, candleWidth * 0.8, barHeight);
     });
 

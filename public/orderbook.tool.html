@@ -9,24 +9,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
         
         :root {
-            --bg-primary: #0a0a0b;
-            --bg-secondary: #111113;
-            --bg-elevated: #1f1f23;
-            --bg-hover: #27272a;
+            --bg-primary: #050a12;
+            --bg-secondary: #080e1a;
+            --bg-elevated: #0f1a2e;
+            --bg-hover: #131f35;
             --accent-primary: #22d3ee;
-            --accent-blue: #3b82f6;
-            --accent-emerald: #10b981;
-            --accent-emerald-bright: #34d399;
-            --color-danger: #ef4444;
-            --color-danger-bright: #f87171;
-            --text-primary: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-muted: #71717a;
-            --border-subtle: rgba(255, 255, 255, 0.06);
-            --border-default: rgba(255, 255, 255, 0.1);
-            --radius-sm: 4px;
-            --radius-md: 6px;
-            --radius-lg: 8px;
+            --accent-blue: #38bdf8;
+            --accent-emerald: #2dd4bf;
+            --accent-emerald-bright: #5eead4;
+            --color-danger: #f43f5e;
+            --color-danger-bright: #fb7185;
+            --text-primary: #f0f9ff;
+            --text-secondary: #bae6fd;
+            --text-muted: #94a3b8;
+            --border-subtle: rgba(34, 211, 238, 0.08);
+            --border-default: rgba(34, 211, 238, 0.12);
+            --radius-sm: 1px;
+            --radius-md: 2px;
+            --radius-lg: 3px;
         }
         
         * {
@@ -87,6 +87,36 @@
             color: var(--text-primary);
         }
 
+        #symbol-select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            min-width: 140px;
+        }
+
+        #symbol-select:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        #symbol-select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+        }
+
+        #symbol-select option {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
         #chart {
             margin: 0;
             padding: 24px;
@@ -108,14 +138,14 @@
 
         .bid-line {
             stroke: var(--accent-emerald);
-            filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6)) 
-                    drop-shadow(0 0 8px rgba(52, 211, 153, 0.3));
+            filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.7)) 
+                    drop-shadow(0 0 10px rgba(94, 234, 212, 0.35));
         }
 
         .ask-line {
             stroke: var(--color-danger);
-            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6)) 
-                    drop-shadow(0 0 8px rgba(248, 113, 113, 0.3));
+            filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.7)) 
+                    drop-shadow(0 0 10px rgba(251, 113, 133, 0.35));
         }
 
         .area {
@@ -203,6 +233,9 @@
 
 <body>
     <div class="orderbook-controls">
+        <select id="symbol-select" aria-label="Trading pair">
+            <option value="BTC/USDT">BTC/USDT</option>
+        </select>
         <select id="range-select" value="0.01">
             <option value="0.002">20 bps</option>
             <option value="0.004">40 bps</option>
@@ -245,7 +278,7 @@
         // Add gradient definitions for vibrant colors
         const defs = svg.append('defs');
         
-        // Bid gradient (green/emerald)
+        // Bid gradient (metallic teal green - fits blue theme)
         const bidGradient = defs.append('linearGradient')
             .attr('id', 'bidGradient')
             .attr('x1', '0%')
@@ -254,14 +287,18 @@
             .attr('y2', '100%');
         bidGradient.append('stop')
             .attr('offset', '0%')
-            .attr('stop-color', '#34d399')
-            .attr('stop-opacity', 0.5);
+            .attr('stop-color', '#5eead4')
+            .attr('stop-opacity', 0.55);
+        bidGradient.append('stop')
+            .attr('offset', '50%')
+            .attr('stop-color', '#2dd4bf')
+            .attr('stop-opacity', 0.35);
         bidGradient.append('stop')
             .attr('offset', '100%')
-            .attr('stop-color', '#10b981')
-            .attr('stop-opacity', 0.2);
+            .attr('stop-color', '#14b8a6')
+            .attr('stop-opacity', 0.15);
         
-        // Ask gradient (red)
+        // Ask gradient (metallic rose red - fits blue theme)
         const askGradient = defs.append('linearGradient')
             .attr('id', 'askGradient')
             .attr('x1', '0%')
@@ -270,12 +307,16 @@
             .attr('y2', '100%');
         askGradient.append('stop')
             .attr('offset', '0%')
-            .attr('stop-color', '#f87171')
-            .attr('stop-opacity', 0.5);
+            .attr('stop-color', '#fb7185')
+            .attr('stop-opacity', 0.55);
+        askGradient.append('stop')
+            .attr('offset', '50%')
+            .attr('stop-color', '#f43f5e')
+            .attr('stop-opacity', 0.35);
         askGradient.append('stop')
             .attr('offset', '100%')
-            .attr('stop-color', '#ef4444')
-            .attr('stop-opacity', 0.2);
+            .attr('stop-color', '#e11d48')
+            .attr('stop-opacity', 0.15);
         
         // Main chart group
         const chartGroup = svg.append('g')
@@ -299,25 +340,29 @@
         const yAxis = chartGroup.append('g')
             .attr('class', 'orderbook-axis y-axis');
 
-        // Line generators
+        // Line generators — step curves for discrete orderbook levels
         const bidLine = d3.line()
             .x(d => x(d.price))
-            .y(d => y(d.cumVolume));
+            .y(d => y(d.cumVolume))
+            .curve(d3.curveStepAfter);
 
         const askLine = d3.line()
             .x(d => x(d.price))
-            .y(d => y(d.cumVolume));
+            .y(d => y(d.cumVolume))
+            .curve(d3.curveStepAfter);
 
-        // **Area generators for filling under the lines**
+        // Area generators — step curves, fill from baseline to cumulative volume
         const bidArea = d3.area()
             .x(d => x(d.price))
-            .y0(chartHeight) // Start from the bottom (x-axis)
-            .y1(d => y(d.cumVolume));
+            .y0(chartHeight)
+            .y1(d => y(d.cumVolume))
+            .curve(d3.curveStepAfter);
 
         const askArea = d3.area()
             .x(d => x(d.price))
             .y0(chartHeight)
-            .y1(d => y(d.cumVolume));
+            .y1(d => y(d.cumVolume))
+            .curve(d3.curveStepAfter);
 
         // Paths for bids and asks areas
         const bidAreaPath = chartGroup.append('path')
@@ -390,11 +435,13 @@
         }
 
         // Function to update the chart
-        function update(data) {
+        // opts.transition: use animation for paths/axes. false = direct attr (no flicker from interrupted transitions during real-time updates)
+        function update(data, opts) {
             if (!data || !data.bids || !data.asks || data.bids.length === 0 || data.asks.length === 0) {
                 console.warn('Invalid data for update:', data);
                 return;
             }
+            const useTransition = !opts || opts.transition !== false;
             
             // Update chart dimensions if container size changed
             const newContainerWidth = chartContainer.clientWidth || window.innerWidth - 40;
@@ -432,58 +479,43 @@
             }
             
             const midPrice = 0.5 * (bestBid.price + bestAsk.price);
-            
-            // Update scales with range filter
             const bpsWidth = Number(window.orderbookRange) || 0.01;
             const minPrice = (1 - bpsWidth) * midPrice;
             const maxPrice = (1 + bpsWidth) * midPrice;
-            
-            console.log('Price range:', {
-                midPrice: midPrice.toFixed(2),
-                minPrice: minPrice.toFixed(2),
-                maxPrice: maxPrice.toFixed(2),
-                bpsWidth,
-                priceRange: ((maxPrice - minPrice) / midPrice * 100).toFixed(2) + '%',
-                bidRange: data.bids.length > 0 ? [data.bids[data.bids.length - 1]?.price.toFixed(2), data.bids[0]?.price.toFixed(2)] : [],
-                askRange: data.asks.length > 0 ? [data.asks[0]?.price.toFixed(2), data.asks[data.asks.length - 1]?.price.toFixed(2)] : []
-            });
-            
-            // Filter data based on range
-            // Bids: include all bids from minPrice up to and including midPrice (bids are below mid)
+
+            // Filter to [minPrice, midPrice] for bids and [midPrice, maxPrice] for asks
             const filteredBids = data.bids.filter(d => d.price >= minPrice && d.price <= midPrice);
-            // Asks: include all asks from midPrice up to and including maxPrice (asks are above mid)
             const filteredAsks = data.asks.filter(d => d.price >= midPrice && d.price <= maxPrice);
-            
-            if (filteredBids.length === 0 || filteredAsks.length === 0) {
-                console.warn('No data after filtering:', { 
-                    bidCount: filteredBids.length, 
-                    askCount: filteredAsks.length,
-                    range: [minPrice, maxPrice],
-                    midPrice,
-                    totalBids: data.bids.length,
-                    totalAsks: data.asks.length
-                });
-                return;
-            }
-            
-            // Set x domain to show the full range
+
+            if (filteredBids.length === 0 || filteredAsks.length === 0) return;
+
+            // Sort ascending by price for left-to-right drawing (bids: min→mid, asks: mid→max)
+            const bidsAsc = [...filteredBids].sort((a, b) => a.price - b.price);
+            const asksAsc = [...filteredAsks].sort((a, b) => a.price - b.price);
+
+            // Anchor points so areas reach the x-axis edges when BPS changes
+            const lastCumBid = bidsAsc.length ? bidsAsc[0].cumVolume : 0;   // worst bid has max cum
+            const lastCumAsk = asksAsc.length ? asksAsc[asksAsc.length - 1].cumVolume : 0;
+            const bidPathData = [{ price: minPrice, cumVolume: lastCumBid }, ...bidsAsc];
+            const askPathData = [...asksAsc, { price: maxPrice, cumVolume: lastCumAsk }];
+
             x.domain([minPrice, maxPrice]);
-            
-            // Get max cumulative volume from filtered data
-            // Use the last item in each filtered array (furthest from mid price)
-            const lastBid = filteredBids[filteredBids.length - 1];
-            const lastAsk = filteredAsks[filteredAsks.length - 1];
-            const maxCumVolume = Math.max(
-                lastBid ? lastBid.cumVolume : 0,
-                lastAsk ? lastAsk.cumVolume : 0
-            );
-            
-            if (maxCumVolume === 0) {
-                console.warn('Zero cumulative volume');
-                return;
-            }
-            
+            const maxCumVolume = Math.max(lastCumBid, lastCumAsk, 1);
             y.domain([0, maxCumVolume]);
+
+            // Base step by BPS (for ~$100k asset): ≤40 bps=$50, 60–100 bps=$100, 200 bps=$200, 300 bps–5%=$500, 10%=$1k
+            const baseStep = bpsWidth <= 0.004 ? 50 : bpsWidth <= 0.01 ? 100 : bpsWidth <= 0.02 ? 200 : bpsWidth >= 0.1 ? 1000 : 500;
+            // Scale by price (ref $100k) and round to a nice 1/2/5 step
+            const ref = 100000;
+            const raw = baseStep * (Math.max(midPrice, 0.01) / ref);
+            const mag = raw <= 0 ? 1e-8 : Math.pow(10, Math.floor(Math.log10(raw)));
+            const norm = raw / mag;
+            const nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+            const priceStep = Math.max(mag * nice, 1e-8);
+            const xStart = Math.ceil(minPrice / priceStep) * priceStep;
+            const xTickValues = [];
+            for (let v = xStart; v <= maxPrice; v += priceStep) xTickValues.push(v);
+            if (xTickValues.length < 2) xTickValues.length = 0; // fall back to D3's ticks
 
             // Update mid-price line
             const midPriceX = x(midPrice);
@@ -511,8 +543,8 @@
                     .attr('stroke-dasharray', '2,4');
             });
             
-            // Vertical grid lines (price levels) - fewer to avoid clutter
-            const xTicks = x.ticks(8);
+            // Vertical grid lines (price levels)
+            const xTicks = xTickValues.length >= 2 ? xTickValues : x.ticks(8);
             xTicks.forEach(tick => {
                 gridGroup.append('line')
                     .attr('class', 'grid-line')
@@ -526,59 +558,41 @@
                     .attr('stroke-dasharray', '2,4');
             });
 
-            // Update axes with smooth transitions and proper formatting
-            xAxis.transition()
-                .duration(150)
-                .ease(d3.easeCubicOut)
-                .call(d3.axisBottom(x)
-                    .tickFormat(d3.format(',.2f'))
-                    .ticks(8));
-            
-            // Y-axis with better formatting and spacing to prevent cutoff
-            yAxis.transition()
-                .duration(150)
-                .ease(d3.easeCubicOut)
-                .call(d3.axisLeft(y)
-                    .tickFormat(d => {
-                        // Format large numbers with K, M, B suffixes
-                        if (d >= 1000000000) return (d / 1000000000).toFixed(1) + 'B';
-                        if (d >= 1000000) return (d / 1000000).toFixed(1) + 'M';
-                        if (d >= 1000) return (d / 1000).toFixed(1) + 'K';
-                        return d3.format(',.0f')(d);
-                    })
-                    .ticks(6));
+            const xAxisFn = () => {
+                const fmt = priceStep < 0.0001 ? (v) => v.toFixed(6) : priceStep < 0.01 ? (v) => v.toFixed(4) : priceStep < 1 ? (v) => v.toFixed(3) : (v) => d3.format(',.2f')(v);
+                const axis = d3.axisBottom(x).tickFormat(fmt);
+                if (xTickValues.length >= 2) axis.tickValues(xTickValues);
+                else axis.ticks(8);
+                return axis;
+            };
+            const yAxisFn = () => d3.axisLeft(y)
+                .tickFormat(d => {
+                    if (d >= 1e9) return (d / 1e9).toFixed(1) + 'B';
+                    if (d >= 1e6) return (d / 1e6).toFixed(1) + 'M';
+                    if (d >= 1e3) return (d / 1e3).toFixed(1) + 'K';
+                    return d3.format(',.0f')(d);
+                })
+                .ticks(6);
+            if (useTransition) {
+                xAxis.transition().duration(100).ease(d3.easeCubicOut).call(xAxisFn());
+                yAxis.transition().duration(100).ease(d3.easeCubicOut).call(yAxisFn());
+            } else {
+                xAxis.call(xAxisFn());
+                yAxis.call(yAxisFn());
+            }
 
-            // Update bid area with filtered data - smooth transitions
-            bidAreaPath
-                .datum(filteredBids)
-                .transition()
-                .duration(200)
-                .ease(d3.easeCubicOut)
-                .attr('d', bidArea);
-
-            // Update ask area with filtered data - smooth transitions
-            askAreaPath
-                .datum(filteredAsks)
-                .transition()
-                .duration(200)
-                .ease(d3.easeCubicOut)
-                .attr('d', askArea);
-
-            // Update bid line with filtered data - smooth transitions
-            bidPath
-                .datum([{ price: filteredBids[0].price, cumVolume: 0 }, ...filteredBids])
-                .transition()
-                .duration(200)
-                .ease(d3.easeCubicOut)
-                .attr('d', bidLine);
-
-            // Update ask line with filtered data - smooth transitions
-            askPath
-                .datum([{ price: filteredAsks[0].price, cumVolume: 0 }, ...filteredAsks])
-                .transition()
-                .duration(200)
-                .ease(d3.easeCubicOut)
-                .attr('d', askLine);
+            if (useTransition) {
+                const t = 80;
+                bidAreaPath.datum(bidPathData).transition().duration(t).ease(d3.easeCubicOut).attr('d', bidArea);
+                askAreaPath.datum(askPathData).transition().duration(t).ease(d3.easeCubicOut).attr('d', askArea);
+                bidPath.datum(bidPathData).transition().duration(t).ease(d3.easeCubicOut).attr('d', bidLine);
+                askPath.datum(askPathData).transition().duration(t).ease(d3.easeCubicOut).attr('d', askLine);
+            } else {
+                bidAreaPath.datum(bidPathData).attr('d', bidArea);
+                askAreaPath.datum(askPathData).attr('d', askArea);
+                bidPath.datum(bidPathData).attr('d', bidLine);
+                askPath.datum(askPathData).attr('d', askLine);
+            }
         }
 
         // Handle window resize
@@ -635,102 +649,56 @@
             }
         }
 
-        // Create WebSocket connection for real-time orderbook depth updates
-        // Note: WebSocket only provides 20 levels, but we use it to update the full snapshot
-        function createOrderbookWebSocket(symbol, onOrderbookUpdate, initialSnapshot = null) {
+        // Binance Diff. Depth @depth@100ms: incremental b/a updates. Merge into full book.
+        function createOrderbookWebSocket(symbol, onOrderbookUpdate, initialSnapshot) {
             const ws = new WebSocket(
-                `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth20@100ms`
+                `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth@100ms`
             );
-            
-            // Initialize with snapshot if provided
-            let orderbook = initialSnapshot 
-                ? {
-                    bids: initialSnapshot.bids.map(([p, q]) => [parseFloat(p), parseFloat(q)]),
-                    asks: initialSnapshot.asks.map(([p, q]) => [parseFloat(p), parseFloat(q)])
-                }
-                : { bids: [], asks: [] };
-            
+            let orderbook = {
+                bids: (initialSnapshot.bids || []).map(([p, q]) => [parseFloat(p), parseFloat(q)]).sort((a, b) => b[0] - a[0]),
+                asks: (initialSnapshot.asks || []).map(([p, q]) => [parseFloat(p), parseFloat(q)]).sort((a, b) => a[0] - b[0])
+            };
             let lastUpdateId = initialSnapshot?.lastUpdateId || 0;
-            let isFirstUpdate = true;
-            
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    
-                    if (data.e === 'depthUpdate') {
-                        // Skip updates before snapshot
-                        if (isFirstUpdate && data.u <= lastUpdateId) {
-                            return;
-                        }
-                        isFirstUpdate = false;
-                        
-                        // Update orderbook with incremental updates
-                        // Process bid updates
-                        if (data.b) {
-                            data.b.forEach(([price, quantity]) => {
-                                const priceNum = parseFloat(price);
-                                const qtyNum = parseFloat(quantity);
-                                
-                                if (qtyNum === 0) {
-                                    // Remove price level
-                                    orderbook.bids = orderbook.bids.filter(b => Math.abs(b[0] - priceNum) > 0.00000001);
-                                } else {
-                                    // Update or add price level
-                                    const existingIndex = orderbook.bids.findIndex(b => Math.abs(b[0] - priceNum) < 0.00000001);
-                                    if (existingIndex >= 0) {
-                                        orderbook.bids[existingIndex][1] = qtyNum;
-                                    } else {
-                                        orderbook.bids.push([priceNum, qtyNum]);
-                                    }
-                                }
-                            });
-                            // Sort bids descending
-                            orderbook.bids.sort((a, b) => b[0] - a[0]);
-                        }
-                        
-                        // Process ask updates
-                        if (data.a) {
-                            data.a.forEach(([price, quantity]) => {
-                                const priceNum = parseFloat(price);
-                                const qtyNum = parseFloat(quantity);
-                                
-                                if (qtyNum === 0) {
-                                    // Remove price level
-                                    orderbook.asks = orderbook.asks.filter(a => Math.abs(a[0] - priceNum) > 0.00000001);
-                                } else {
-                                    // Update or add price level
-                                    const existingIndex = orderbook.asks.findIndex(a => Math.abs(a[0] - priceNum) < 0.00000001);
-                                    if (existingIndex >= 0) {
-                                        orderbook.asks[existingIndex][1] = qtyNum;
-                                    } else {
-                                        orderbook.asks.push([priceNum, qtyNum]);
-                                    }
-                                }
-                            });
-                            // Sort asks ascending
-                            orderbook.asks.sort((a, b) => a[0] - b[0]);
-                        }
-                        
-                        // Send updated orderbook
-                        onOrderbookUpdate({
-                            bids: [...orderbook.bids],
-                            asks: [...orderbook.asks],
-                            lastUpdateId: data.u,
-                        });
+
+            function applyLevels(side, arr, isBid) {
+                if (!arr || !arr.length) return;
+                const cmp = (a, b) => isBid ? b[0] - a[0] : a[0] - b[0];
+                arr.forEach(([p, q]) => {
+                    const price = parseFloat(p);
+                    const qty = parseFloat(q);
+                    if (qty === 0) {
+                        if (isBid) orderbook.bids = orderbook.bids.filter(b => Math.abs(b[0] - price) > 1e-12);
+                        else orderbook.asks = orderbook.asks.filter(a => Math.abs(a[0] - price) > 1e-12);
+                    } else {
+                        const list = isBid ? orderbook.bids : orderbook.asks;
+                        const i = list.findIndex(x => Math.abs(x[0] - price) < 1e-12);
+                        if (i >= 0) list[i][1] = qty;
+                        else { list.push([price, qty]); list.sort(cmp); }
                     }
-                } catch (error) {
-                    console.error('Error parsing orderbook WebSocket message:', error);
+                });
+            }
+
+            ws.onmessage = (e) => {
+                try {
+                    let data = JSON.parse(e.data);
+                    if (data.data) data = data.data;
+                    const u = data.u ?? data.lastUpdateId;
+                    // Only process depthUpdate; skip if before our snapshot
+                    if (data.e !== 'depthUpdate' || (u != null && u <= lastUpdateId)) return;
+                    lastUpdateId = u;
+                    applyLevels('bids', data.b, true);
+                    applyLevels('asks', data.a, false);
+                    onOrderbookUpdate({
+                        bids: orderbook.bids.map(b => [...b]),
+                        asks: orderbook.asks.map(a => [...a]),
+                        lastUpdateId: u
+                    });
+                } catch (err) {
+                    console.error('Orderbook WebSocket parse error:', err);
                 }
             };
-            
-            ws.onerror = (error) => {
-                console.error('Orderbook WebSocket error:', error);
-            };
-            
-            ws.onclose = () => {
-                console.log('Orderbook WebSocket closed');
-            };
-            
+            ws.onerror = () => {};
+            ws.onclose = () => {};
             return ws;
         }
 
@@ -756,55 +724,40 @@
             }
         }
 
-        const updateOrderbook = (orderbook) => {
+        let lastRender = 0;
+        const MIN_RENDER_MS = 50;
+
+        function updateOrderbook(orderbook) {
             const { bids, asks } = orderbook;
-            
-            if (!bids || !asks || bids.length === 0 || asks.length === 0) {
-                console.warn('Empty orderbook data');
-                return;
-            }
-            
-            // Process bids: volume = price * quantity, then calculate cumulative
-            // Bids should be sorted descending (highest price first, closest to mid)
+            if (!bids?.length || !asks?.length) return;
+
             const sortedBids = [...bids].sort((a, b) => b[0] - a[0]);
-            const bidData = sortedBids
-                .map((d) => ({ price: d[0], volume: d[0] * d[1] }));
-            
-            // Calculate cumulative volume for bids (from highest to lowest price)
-            // Start from the highest bid (closest to mid) and accumulate downward
-            let cumVolume = 0;
-            bidData.forEach((d) => {
-                cumVolume += d.volume;
-                d.cumVolume = cumVolume;
+            let cum = 0;
+            const bidData = sortedBids.map((d) => {
+                cum += d[0] * d[1];
+                return { price: d[0], volume: d[0] * d[1], cumVolume: cum };
             });
-            
-            // Process asks: volume = price * quantity, then calculate cumulative
-            // Asks should be sorted ascending (lowest price first, closest to mid)
+
             const sortedAsks = [...asks].sort((a, b) => a[0] - b[0]);
-            const askData = sortedAsks
-                .map((d) => ({ price: d[0], volume: d[0] * d[1] }));
-            
-            // Calculate cumulative volume for asks (from lowest to highest price)
-            // Start from the lowest ask (closest to mid) and accumulate upward
-            cumVolume = 0;
-            askData.forEach((d) => {
-                cumVolume += d.volume;
-                d.cumVolume = cumVolume;
+            cum = 0;
+            const askData = sortedAsks.map((d) => {
+                cum += d[0] * d[1];
+                return { price: d[0], volume: d[0] * d[1], cumVolume: cum };
             });
-            
-            // Store for resize handling
+
             window.lastOrderbookData = { bids: bidData, asks: askData };
-            
-            console.log('Updating orderbook:', {
-                bidCount: bidData.length,
-                askCount: askData.length,
-                bidRange: bidData.length > 0 ? [bidData[bidData.length - 1].price.toFixed(2), bidData[0].price.toFixed(2)] : [],
-                askRange: askData.length > 0 ? [askData[0].price.toFixed(2), askData[askData.length - 1].price.toFixed(2)] : [],
-                bestBid: bidData[0]?.price.toFixed(2),
-                bestAsk: askData[0]?.price.toFixed(2)
-            });
-            
-            update({ bids: bidData, asks: askData });
+            const now = Date.now();
+            if (now - lastRender >= MIN_RENDER_MS) {
+                lastRender = now;
+                update({ bids: bidData, asks: askData }, { transition: false });
+            } else if (!window._obScheduled) {
+                window._obScheduled = true;
+                setTimeout(() => {
+                    window._obScheduled = false;
+                    lastRender = Date.now();
+                    if (window.lastOrderbookData) update(window.lastOrderbookData, { transition: false });
+                }, MIN_RENDER_MS - (now - lastRender));
+            }
         }
 
         let wsConnection = null;
@@ -818,29 +771,10 @@
 
             if (newSymbol) {
                 const binanceSymbol = formatSymbolForBinance(newSymbol);
-                console.log('Fetching orderbook snapshot for:', binanceSymbol);
-                
-                // Fetch initial snapshot with max depth (5000 levels)
                 const snapshot = await fetchOrderbookSnapshot(binanceSymbol, 5000);
                 
                 if (snapshot.bids.length > 0 && snapshot.asks.length > 0) {
-                    const midPrice = 0.5 * (snapshot.bids[0][0] + snapshot.asks[0][0]);
-                    const bpsWidth = Number(window.orderbookRange) || 0.01;
-                    const minPrice = (1 - bpsWidth) * midPrice;
-                    const maxPrice = (1 + bpsWidth) * midPrice;
-                    
-                    console.log('Snapshot received:', {
-                        bidCount: snapshot.bids.length,
-                        askCount: snapshot.asks.length,
-                        bidRange: [snapshot.bids[snapshot.bids.length - 1][0].toFixed(2), snapshot.bids[0][0].toFixed(2)],
-                        askRange: [snapshot.asks[0][0].toFixed(2), snapshot.asks[snapshot.asks.length - 1][0].toFixed(2)],
-                        midPrice: midPrice.toFixed(2),
-                        displayRange: [minPrice.toFixed(2), maxPrice.toFixed(2)],
-                        bidsInRange: snapshot.bids.filter(b => b[0] >= minPrice && b[0] <= midPrice).length,
-                        asksInRange: snapshot.asks.filter(a => a[0] >= midPrice && a[0] <= maxPrice).length
-                    });
-                    
-                    // Update with initial snapshot
+                    lastRender = 0;
                     updateOrderbook(snapshot);
                     
                     // Set up WebSocket for real-time updates
@@ -859,33 +793,29 @@
             }
         }
 
-        window.orderbookSymbol = 'BTC/USDT';
-        window.orderbookRange = document.getElementById("range-select").value || '0.01';
-        console.log('Initializing orderbook:', window.orderbookSymbol, window.orderbookRange);
-        
-        // Initialize: start orderbook stream for BTC/USDT
-        updateSymbol(window.orderbookSymbol);
-        window.onclick = async (event) => {
-            const target = event.target;
+        window.orderbookSymbol = document.getElementById('symbol-select').value || 'BTC/USDT';
+        window.orderbookRange = document.getElementById('range-select').value || '0.01';
 
-            console.log(target.tagName, target.id);
-            const id = target.id;
-            if (!id) return;
-            
-            if (id == "symbol-select") {
-                const oldSymbol = window.orderbookSymbol;
-                window.orderbookSymbol = document.getElementById("symbol-select").value;
-                console.log(window.orderbookSymbol);
-                updateSymbol(window.orderbookSymbol, oldSymbol);
-            }
-            if (id == "range-select") {
-                window.orderbookRange = document.getElementById("range-select").value;
-                // Trigger update to redraw with new range
-                if (window.lastOrderbookData) {
-                    update(window.lastOrderbookData);
-                }
-            }
-        }
+        document.getElementById('symbol-select').addEventListener('change', function () {
+            const oldSymbol = window.orderbookSymbol;
+            window.orderbookSymbol = this.value;
+            updateSymbol(window.orderbookSymbol, oldSymbol);
+        });
+
+        document.getElementById('range-select').addEventListener('change', function () {
+            window.orderbookRange = this.value;
+            if (window.lastOrderbookData) update(window.lastOrderbookData);
+        });
+
+        // Populate symbol select from Binance USDT pairs
+        fetchTradingPairs().then(pairs => {
+            const sel = document.getElementById('symbol-select');
+            const cur = window.orderbookSymbol;
+            sel.innerHTML = pairs.map(p => `<option value="${p.displaySymbol}">${p.displaySymbol}</option>`).join('');
+            if (pairs.some(p => p.displaySymbol === cur)) sel.value = cur;
+        });
+
+        updateSymbol(window.orderbookSymbol);
     </script>
 </body>
 

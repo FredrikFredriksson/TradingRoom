@@ -14,91 +14,49 @@ const Analytics = () => {
   useEffect(() => {
     if (!gridRef.current) return;
 
-    // Initialize GridStack - it should automatically read data-gs-* attributes
+    // GridStack reads gs-x, gs-y, gs-w, gs-h (not data-gs-*). React passes data-* to DOM,
+    // so we use data-gs-* in JSX and copy to gs-* before init.
+    const gridEl = gridRef.current;
+    gridEl.querySelectorAll('.grid-stack-item').forEach((el) => {
+      const copy = (from, to) => { const v = el.getAttribute(from); if (v != null) el.setAttribute(to, v); };
+      copy('data-gs-x', 'gs-x');
+      copy('data-gs-y', 'gs-y');
+      copy('data-gs-w', 'gs-w');
+      copy('data-gs-h', 'gs-h');
+      copy('data-gs-min-w', 'gs-min-w');
+      copy('data-gs-min-h', 'gs-min-h');
+    });
+
+    // Match leverage-gridstack logic: cellHeight 'auto', responsive columnOpts, animate on,
+    // no float/disableOneColumnMode. Smooth drag/resize and breakpoint transitions.
     gridInstanceRef.current = GridStack.init({
       column: 12,
-      cellHeight: 70,
-      margin: 10,
+      cellHeight: 'auto',
+      margin: 5,
       minRow: 1,
+      animate: true,
+      columnOpts: {
+        breakpointForWindow: true,
+        breakpoints: [
+          { w: 700, c: 1 },
+          { w: 850, c: 4 },
+          { w: 1100, c: 6 },
+          { w: 1400, c: 8 },
+          { w: 1800, c: 12 }
+        ]
+      },
       resizable: {
-        handles: 'e, se, s, sw, w'
+        handles: 'e, se, s, sw, w',
+        autoHide: false
       },
       draggable: {
-        handle: '.widget-header'
-      },
-      float: false, // Prevent floating/overlapping - items stay in grid positions
-      animate: false, // Disable animation on initial load for better performance
-      disableOneColumnMode: true
+        handle: '.widget-header',
+        scroll: true
+      }
     }, gridRef.current);
-    
-    // Function to compact grid and prevent overlaps - only when needed
-    const compactGrid = () => {
-      if (!gridInstanceRef.current) return;
-      try {
-        // Compact items to fill gaps and prevent overlaps
-        // Only compact if there are actually overlaps or gaps
-        if (typeof gridInstanceRef.current.compact === 'function') {
-          // Use compact method to move items to best available space
-          gridInstanceRef.current.compact();
-        }
-      } catch (e) {
-        // Silently handle - compact might not be available in all versions
-        console.debug('GridStack compact:', e);
-      }
-    };
-
-    // Handle drag stop to ensure proper positioning and prevent overlaps
-    const handleDragStop = (event, element) => {
-      // Compact after drag to ensure items are properly positioned and no overlaps
-      // Use a small delay to ensure GridStack has finished processing the drag
-      setTimeout(() => {
-        compactGrid();
-      }, 100);
-    };
-
-    // Handle resize stop to ensure proper positioning and prevent overlaps
-    const handleResizeStop = (event, element) => {
-      // Compact after resize to ensure items are properly positioned and no overlaps
-      // Use a small delay to ensure GridStack has finished processing the resize
-      setTimeout(() => {
-        compactGrid();
-      }, 100);
-    };
-
-    // Attach event listeners - only on drag/resize stops, not on every change
-    gridInstanceRef.current.on('dragstop', handleDragStop);
-    gridInstanceRef.current.on('resizestop', handleResizeStop);
-
-    // Force widgets to maintain their preset sizes after initialization
-    // GridStack should read data-gs-* attributes, but we'll enforce them explicitly
-    setTimeout(() => {
-      if (gridInstanceRef.current && gridRef.current) {
-        const items = Array.from(gridRef.current.querySelectorAll('.grid-stack-item'));
-        items.forEach((item) => {
-          const w = parseInt(item.getAttribute('data-gs-w')) || 4;
-          const h = parseInt(item.getAttribute('data-gs-h')) || 3;
-          const x = parseInt(item.getAttribute('data-gs-x')) || 0;
-          const y = parseInt(item.getAttribute('data-gs-y')) || 0;
-          
-          // Get the GridStack item object for this element
-          const gridItems = gridInstanceRef.current.getGridItems();
-          const gridItem = gridItems.find(gi => gi.el === item);
-          
-          if (gridItem) {
-            // Update widget with explicit position and size
-            gridInstanceRef.current.update(gridItem, { x, y, w, h });
-          }
-        });
-        
-        // Don't compact on initial load - let items stay in their preset positions
-      }
-    }, 100);
 
     return () => {
       if (gridInstanceRef.current) {
-        // Remove event listeners
-        gridInstanceRef.current.off('dragstop', handleDragStop);
-        gridInstanceRef.current.off('resizestop', handleResizeStop);
         gridInstanceRef.current.destroy(false);
       }
     };
@@ -118,9 +76,9 @@ const Analytics = () => {
         {/* Price Card - Small BTC graph */}
         <div 
           className="grid-stack-item" 
-          data-gs-x="0" 
-          data-gs-y="0" 
-          data-gs-w="5" 
+          data-gs-x="0"
+          data-gs-y="0"
+          data-gs-w="5"
           data-gs-h="4"
           data-gs-min-w="4"
           data-gs-min-h="3"
@@ -136,9 +94,9 @@ const Analytics = () => {
         {/* TradingView Chart */}
         <div 
           className="grid-stack-item" 
-          data-gs-x="5" 
-          data-gs-y="0" 
-          data-gs-w="7" 
+          data-gs-x="5"
+          data-gs-y="0"
+          data-gs-w="7"
           data-gs-h="4"
           data-gs-min-w="6"
           data-gs-min-h="3"
@@ -154,9 +112,9 @@ const Analytics = () => {
         {/* Orderbook */}
         <div 
           className="grid-stack-item" 
-          data-gs-x="0" 
-          data-gs-y="4" 
-          data-gs-w="12" 
+          data-gs-x="0"
+          data-gs-y="4"
+          data-gs-w="12"
           data-gs-h="7"
           data-gs-min-w="10"
           data-gs-min-h="6"

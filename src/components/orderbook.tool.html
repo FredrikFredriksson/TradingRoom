@@ -7,11 +7,11 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ccxt@latest/dist/ccxt.browser.js"></script>
     <style>
-        /* Basic styling */
+        /* Basic styling - dark blue / blue-black */
         body {
             font-family: Arial, sans-serif;
-            background-color: #0c1a32;
-            color: azure;
+            background: linear-gradient(180deg, #080e1a 0%, #050a12 50%, #03060c 100%);
+            color: #f0f9ff;
         }
 
         #chart {
@@ -24,11 +24,13 @@
         }
 
         .bid-line {
-            stroke: #1BC5BF;
+            stroke: #2dd4bf;
+            filter: drop-shadow(0 0 3px rgba(45, 212, 191, 0.6));
         }
 
         .ask-line {
-            stroke: #F64E62;
+            stroke: #f43f5e;
+            filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.6));
         }
     </style>
 </head>
@@ -79,11 +81,18 @@
             height = 500 - margin.top - margin.bottom;
 
         // Append SVG to the chart div
-        const svg = d3.select('#chart')
+        const svgEl = d3.select('#chart')
             .append('svg')
             .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
-            .append('g')
+            .attr('height', height + margin.top + margin.bottom);
+        const defs = svgEl.append('defs');
+        const bidGrad = defs.append('linearGradient').attr('id', 'bidGradient').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+        bidGrad.append('stop').attr('offset', '0%').attr('stop-color', '#5eead4').attr('stop-opacity', 0.5);
+        bidGrad.append('stop').attr('offset', '100%').attr('stop-color', '#14b8a6').attr('stop-opacity', 0.2);
+        const askGrad = defs.append('linearGradient').attr('id', 'askGradient').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+        askGrad.append('stop').attr('offset', '0%').attr('stop-color', '#fb7185').attr('stop-opacity', 0.5);
+        askGrad.append('stop').attr('offset', '100%').attr('stop-color', '#e11d48').attr('stop-opacity', 0.2);
+        const svg = svgEl.append('g')
             .attr('transform', `translate(${margin.left},${margin.top})`);
 
         // Initialize scales
@@ -118,13 +127,13 @@
         // Paths for bids and asks areas
         const bidAreaPath = svg.append('path')
             .attr('class', 'area bid-area')
-            .style('fill', '#1BC5BF')
-            .style('opacity', 0.3);
+            .style('fill', 'url(#bidGradient)')
+            .style('opacity', 0.4);
 
         const askAreaPath = svg.append('path')
             .attr('class', 'area ask-area')
-            .style('fill', '#F64E62')
-            .style('opacity', 0.3);
+            .style('fill', 'url(#askGradient)')
+            .style('opacity', 0.4);
 
         // Paths for bids and asks lines (ensure these are on top of areas)
         const bidPath = svg.append('path')

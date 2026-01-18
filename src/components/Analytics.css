@@ -32,6 +32,24 @@
   min-height: 600px;
 }
 
+/* Smoother drag/resize transitions - aligned with leverage gridstack behavior */
+.grid-stack.grid-stack-animate .grid-stack-item {
+  transition: left 0.2s ease-out, top 0.2s ease-out, height 0.2s ease-out, width 0.2s ease-out;
+}
+.grid-stack.grid-stack-animate .grid-stack-item.ui-draggable-dragging,
+.grid-stack.grid-stack-animate .grid-stack-item.ui-resizable-resizing,
+.grid-stack.grid-stack-animate .grid-stack-item.grid-stack-placeholder {
+  transition: none;
+}
+
+/* Placeholder while dragging - dashed drop target like leverage tool */
+.grid-stack-placeholder {
+  background: transparent;
+  box-shadow: none;
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-md);
+}
+
 .grid-stack-item {
   background: transparent;
 }
@@ -46,32 +64,9 @@
   height: 100%;
 }
 
-/* Ensure minimum sizes for widgets - enforce with !important */
-.grid-stack-item[data-gs-w="5"] {
-  min-width: 400px !important;
-}
-
-.grid-stack-item[data-gs-w="7"] {
-  min-width: 500px !important;
-}
-
-.grid-stack-item[data-gs-w="12"] {
-  min-width: 100% !important;
-}
-
-.grid-stack-item[data-gs-h="4"] {
-  min-height: 280px !important;
-}
-
-.grid-stack-item[data-gs-h="7"] {
-  min-height: 450px !important;
-}
-
-/* Orderbook widget specific sizing */
-.grid-stack-item:has(.orderbook-tool-container) {
-  min-width: 825px !important;
-  min-height: 450px !important;
-}
+/* Let GridStack control item dimensions. Do NOT set min-width/min-height on
+   .grid-stack-item - it causes items to exceed their grid cells and overlap.
+   Minimum sizes use data-gs-min-w and data-gs-min-h in the DOM. */
 
 .widget-wrapper {
   height: 100%;
@@ -110,14 +105,16 @@
   min-height: 0;
 }
 
-/* GridStack resize handles styling */
+/* GridStack drag/resize feedback */
 .grid-stack-item.ui-resizable-resizing {
-  opacity: 0.9;
+  opacity: 0.92;
+  z-index: 1001;
 }
 
 .grid-stack-item.ui-draggable-dragging {
-  opacity: 0.8;
+  opacity: 0.9;
   z-index: 1000;
+  box-shadow: var(--shadow-lg);
 }
 
 /* Responsive */

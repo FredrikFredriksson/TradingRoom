@@ -40,6 +40,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
+import PerformanceTearsheet from './PerformanceTearsheet';
 import './TradingJournal.css';
 
 const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBalance = 1000 }) => {
@@ -878,6 +879,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
               </div>
             </div>
           )}
+
+          {/* Performance Tearsheet: KPIs, monthly heatmap, equity, drawdown, return distribution */}
+          <PerformanceTearsheet closedTrades={closedTrades} initialBalance={initialBalance} />
         </div>
       )}
 

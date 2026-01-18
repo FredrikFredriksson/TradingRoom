@@ -47,6 +47,9 @@ async function regenerateTrades() {
   const startDate = new Date('2025-01-01');
   const endDate = new Date('2025-12-31');
   
+  // Months that should be net losing (0-indexed: Jan=0, Feb=1, Mar=2, ... Aug=7)
+  const losingMonths = [1, 2, 7]; // Feb, Mar, Aug 2025
+
   // Generate trades for each month to ensure activity across all months
   for (let month = 0; month < 12; month++) {
     const monthStart = new Date(2025, month, 1);
@@ -85,7 +88,13 @@ async function regenerateTrades() {
         closeDate.setTime(monthEnd.getTime());
       }
 
-      const rMultiplier = -2 + Math.random() * 5; // -2R to +3R
+      // In losing months: bias R to -1.5..0 (net red). Else: -2R to +3R.
+      let rMultiplier;
+      if (losingMonths.includes(month)) {
+        rMultiplier = -1.5 + Math.random() * 1.2; // roughly -1.5 to -0.3
+      } else {
+        rMultiplier = -2 + Math.random() * 5; // -2R to +3R
+      }
       const rResult = parseFloat(rMultiplier.toFixed(2));
       const pnlDollar = parseFloat((rValue * rMultiplier).toFixed(2));
 

@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gridstack Example</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.2.1/dist/gridstack.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@12.2.1/dist/gridstack-all.min.js"></script>
+    <!-- Gridstack CSS 
+    <link href="../../../node_modules/gridstack/dist/gridstack.min.css" rel="stylesheet" />
+    <link href="../../../node_modules/gridstack/dist/gridstack-extra.min.css" rel="stylesheet" />
+    <script src="../../../node_modules/gridstack/dist/gridstack-all.js"></script>
+     Optional custom CSS -->
+    <style>
+        h2 {
+            font-size: 12px;
+        }
+
+        h3,
+        figcaption {
+            font-size: 11px;
+        }
+
+        body {
+            background-color: #f4f5fa;
+        }
+
+        .grid-stack {
+            border-radius: 2px;
+            box-shadow: 2px 2px 4px 4px #a0a0a0;
+
+
+        }
+
+        .grid-stack-item {
+
+            background: #f4f5fa;
+            overflow: hidden;
+
+        }
+
+        .grid-stack-item-content {
+            background: rgb(255, 255, 255);
+            color: #2c3e50;
+            text-align: center;
+            font-size: 20px;
+            border-radius: 2px;
+            box-shadow: 1px 1px 4px #a0a0a0;
+            overflow: hidden;
+            padding: 5px;
+        }
+
+        .grid-stack-item-content .fa {
+            font-size: 64px;
+            display: block;
+        }
+
+        .grid-stack-placeholder {
+            background: rgba(250, 250, 250, 0);
+            box-shadow: none;
+            border-width: 2px;
+            border-style: dashed;
+            border-color: #141f1f;
+        }
+
+        .grid-stack-sub-grid div {
+            overflow: hidden;
+        }
+
+        .tabbed-inputs {
+            grid-column: 1;
+        }
+
+        .tabbed-inputs .tabs {
+            display: flex;
+            cursor: pointer;
+        }
+
+        .tabbed-inputs .tabs div {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+
+        .tabbed-inputs .tabs .active {
+            background-color: #ddd;
+        }
+
+        .tabbed-inputs .tab-content {
+            border: 1px solid #ccc;
+            border-top: none;
+            padding: 10px;
+        }
+
+        .tabbed-inputs .tab-content>div {
+            display: none;
+        }
+
+        .tabbed-inputs .tab-content>div.active {
+            display: block;
+        }
+
+        .slider-input {
+            grid-column: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-input input[type="range"] {
+            margin-right: 10px;
+            flex: 1;
+        }
+
+        .output-grid {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .dial {
+            stroke-width: 10
+        }
+
+        .value {
+            stroke-width: 8
+        }
+
+        .table-container {
+            margin: 0 auto;
+            max-width: 800px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #dddddd;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .parameter-label {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            table {
+                font-size: 12px;
+            }
+        }
+    </style>
+    <!--  <script src="https://cdn.jsdelivr.net/npm/gridstack@latest/dist/gridstack.all.js"></script> -->
+
+</head>
+
+<body>
+    <!-- Gridstack Container -->
+    <div id="simple-grid" class="grid-stack">
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
+    <script src="https://unpkg.com/mathjs@13.0.3/lib/browser/math.js"></script>
+    <script>
+        //+----------------------------------------------------+
+        //|                    Import Gauge                    |
+        //+----------------------------------------------------+
+        /* global window, define, module */
+        (function (global, factory) {
+            var Gauge = factory(global);
+            if (typeof define === "function" && define.amd) {
+                // AMD support
+                define(function () { return Gauge; });
+            } else if (typeof module === "object" && module.exports) {
+                // CommonJS support
+                module.exports = Gauge;
+            } else {
+                // We are probably running in the browser
+                global.Gauge = Gauge;
+            }
+        })(typeof window === "undefined" ? this : window, function (global, undefined) {
+
+            var document = global.document,
+                slice = Array.prototype.slice,
+                requestAnimationFrame = (global.requestAnimationFrame ||
+                    global.mozRequestAnimationFrame ||
+                    global.webkitRequestAnimationFrame ||
+                    global.msRequestAnimationFrame ||
+                    function (cb) {
+                        return setTimeout(cb, 1000 / 60);
+                    });
+
+            // EXPERIMENTAL!!
+            /**
+             * Simplistic animation function for animating the gauge. That's all!
+             * Options are:
+             * {
+             *  duration: 1,    // In seconds
+             *  start: 0,       // The start value
+             *  end: 100,       // The end value
+             *  step: function, // REQUIRED! The step function that will be passed the value and does something
+             *  easing: function // The easing function. Default is easeInOutCubic
+             * }
+             */
+            function Animation(options) {
+                var duration = options.duration,
+                    currentIteration = 1,
+                    iterations = 60 * duration,
+                    start = options.start || 0,
+                    end = options.end,
+                    change = end - start,
+                    step = options.step,
+                    easing = options.easing || function easeInOutCubic(pos) {
+                        // https://github.com/danro/easing-js/blob/master/easing.js
+                        if ((pos /= 0.5) < 1) return 0.5 * Math.pow(pos, 3);
+                        return 0.5 * (Math.pow((pos - 2), 3) + 2);
+                    };
+
+                function animate() {
+                    var progress = currentIteration / iterations,
+                        value = change * easing(progress) + start;
+                    // console.log(progress + ", " + value);
+                    step(value, currentIteration);
+                    currentIteration += 1;
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                }
+                // start!
+                requestAnimationFrame(animate);
+            }
+
+
+
+            var Gauge = (function () {
+                var SVG_NS = "http://www.w3.org/2000/svg";
+
+                var GaugeDefaults = {
+                    centerX: 50,
+                    centerY: 50
+                };
+
+                var defaultOptions = {
+                    dialRadius: 40,
+                    dialStartAngle: 135,
+                    dialEndAngle: 45,
+                    value: 0,
+                    max: 100,
+                    min: 0,
+                    valueDialClass: "value",
+                    valueClass: "value-text",
+                    dialClass: "dial",
+                    gaugeClass: "gauge",
+                    showValue: true,
+                    gaugeColor: null,
+                    label: function (val) { return Math.round(val); }
+                };
+
+                function shallowCopy(/* source, ...targets*/) {
+                    var target = arguments[0], sources = slice.call(arguments, 1);
+                    sources.forEach(function (s) {
+                        for (k in s) {
+                            if (s.hasOwnProperty(k)) {
+                                target[k] = s[k];
+                            }
+                        }
+                    });
+                    return target;
+                }
+
+                /**
+                 * A utility function to create SVG dom tree
+                 * @param {String} name The SVG element name
+                 * @param {Object} attrs The attributes as they appear in DOM e.g. stroke-width and not strokeWidth
+                 * @param {Array} children An array of children (can be created by this same function)
+                 * @return The SVG element
+                 */
+                function svg(name, attrs, children) {
+                    var elem = document.createElementNS(SVG_NS, name);
+                    for (var attrName in attrs) {
+                        elem.setAttribute(attrName, attrs[attrName]);
+                    }
+
+                    if (children) {
+                        children.forEach(function (c) {
+                            elem.appendChild(c);
+                        });
+                    }
+                    return elem;
+                }
+
+                /**
+                 * Translates percentage value to angle. e.g. If gauge span angle is 180deg, then 50%
+                 * will be 90deg
+                 */
+                function getAngle(percentage, gaugeSpanAngle) {
+                    return percentage * gaugeSpanAngle / 100;
+                }
+
+                function normalize(value, min, limit) {
+                    var val = Number(value);
+                    if (val > limit) return limit;
+                    if (val < min) return min;
+                    return val;
+                }
+
+                function getValueInPercentage(value, min, max) {
+                    var newMax = max - min, newVal = value - min;
+                    return 100 * newVal / newMax;
+                    // var absMin = Math.abs(min);
+                    // return 100 * (absMin + value) / (max + absMin);
+                }
+
+                /**
+                 * Gets cartesian co-ordinates for a specified radius and angle (in degrees)
+                 * @param cx {Number} The center x co-oriinate
+                 * @param cy {Number} The center y co-ordinate
+                 * @param radius {Number} The radius of the circle
+                 * @param angle {Number} The angle in degrees
+                 * @return An object with x,y co-ordinates
+                 */
+                function getCartesian(cx, cy, radius, angle) {
+                    var rad = angle * Math.PI / 180;
+                    return {
+                        x: Math.round((cx + radius * Math.cos(rad)) * 1000) / 1000,
+                        y: Math.round((cy + radius * Math.sin(rad)) * 1000) / 1000
+                    };
+                }
+
+                // Returns start and end points for dial
+                // i.e. starts at 135deg ends at 45deg with large arc flag
+                // REMEMBER!! angle=0 starts on X axis and then increases clockwise
+                function getDialCoords(radius, startAngle, endAngle) {
+                    var cx = GaugeDefaults.centerX,
+                        cy = GaugeDefaults.centerY;
+                    return {
+                        end: getCartesian(cx, cy, radius, endAngle),
+                        start: getCartesian(cx, cy, radius, startAngle)
+                    };
+                }
+
+                /**
+                 * Creates a Gauge object. This should be called without the 'new' operator. Various options
+                 * can be passed for the gauge:
+                 * {
+                 *    dialStartAngle: The angle to start the dial. MUST be greater than dialEndAngle. Default 135deg
+                 *    dialEndAngle: The angle to end the dial. Default 45deg
+                 *    radius: The gauge's radius. Default 400
+                 *    max: The maximum value of the gauge. Default 100
+                 *    value: The starting value of the gauge. Default 0
+                 *    label: The function on how to render the center label (Should return a value)
+                 * }
+                 * @param {Element} elem The DOM into which to render the gauge
+                 * @param {Object} opts The gauge options
+                 * @return a Gauge object
+                 */
+                return function Gauge(elem, opts) {
+                    opts = shallowCopy({}, defaultOptions, opts);
+                    var gaugeContainer = elem,
+                        limit = opts.max,
+                        min = opts.min,
+                        value = normalize(opts.value, min, limit),
+                        radius = opts.dialRadius,
+                        displayValue = opts.showValue,
+                        startAngle = opts.dialStartAngle,
+                        endAngle = opts.dialEndAngle,
+                        valueDialClass = opts.valueDialClass,
+                        valueTextClass = opts.valueClass,
+                        valueLabelClass = opts.valueLabelClass,
+                        dialClass = opts.dialClass,
+                        gaugeClass = opts.gaugeClass,
+                        gaugeColor = opts.color,
+                        gaugeValueElem,
+                        gaugeValuePath,
+                        label = opts.label,
+                        viewBox = opts.viewBox,
+                        instance;
+
+                    if (startAngle < endAngle) {
+                        console.log("WARN! startAngle < endAngle, Swapping");
+                        var tmp = startAngle;
+                        startAngle = endAngle;
+                        endAngle = tmp;
+                    }
+
+                    function pathString(radius, startAngle, endAngle, largeArc) {
+                        var coords = getDialCoords(radius, startAngle, endAngle),
+                            start = coords.start,
+                            end = coords.end,
+                            largeArcFlag = typeof (largeArc) === "undefined" ? 1 : largeArc;
+
+                        return [
+                            "M", start.x, start.y,
+                            "A", radius, radius, 0, largeArcFlag, 1, end.x, end.y
+                        ].join(" ");
+                    }
+
+                    function initializeGauge(elem) {
+                        gaugeValueElem = svg("text", {
+                            x: 50,
+                            y: 50,
+                            fill: "#999",
+                            "class": valueTextClass,
+                            "font-size": "100%",
+                            "font-family": "sans-serif",
+                            "font-weight": "normal",
+                            "text-anchor": "middle",
+                            "alignment-baseline": "middle",
+                            "dominant-baseline": "central"
+                        });
+
+                        gaugeValuePath = svg("path", {
+                            "class": valueDialClass,
+                            fill: "none",
+                            stroke: "#666",
+                            "stroke-width": 2.5,
+                            d: pathString(radius, startAngle, startAngle) // value of 0
+                        });
+
+                        var angle = getAngle(100, 360 - Math.abs(startAngle - endAngle));
+                        var flag = angle <= 180 ? 0 : 1;
+                        var gaugeElement = svg("svg", { "viewBox": viewBox || "0 0 100 100", "class": gaugeClass },
+                            [
+                                svg("path", {
+                                    "class": dialClass,
+                                    fill: "none",
+                                    stroke: "#eee",
+                                    "stroke-width": 2,
+                                    d: pathString(radius, startAngle, endAngle, flag)
+                                }),
+                                gaugeValueElem,
+                                gaugeValuePath
+                            ]
+                        );
+                        elem.appendChild(gaugeElement);
+                    }
+
+                    function updateGauge(theValue, frame) {
+                        var val = getValueInPercentage(theValue, min, limit),
+                            // angle = getAngle(val, 360 - Math.abs(endAngle - startAngle)),
+                            angle = getAngle(val, 360 - Math.abs(startAngle - endAngle)),
+                            // this is because we are using arc greater than 180deg
+                            flag = angle <= 180 ? 0 : 1;
+                        if (displayValue) {
+                            gaugeValueElem.textContent = label.call(opts, theValue);
+                        }
+                        gaugeValuePath.setAttribute("d", pathString(radius, startAngle, angle + startAngle, flag));
+                    }
+
+                    function setGaugeColor(value, duration) {
+                        var c = gaugeColor(value),
+                            dur = duration * 1000,
+                            pathTransition = "stroke " + dur + "ms ease";
+                        // textTransition = "fill " + dur + "ms ease";
+
+                        gaugeValuePath.style = [
+                            "stroke: " + c,
+                            "-webkit-transition: " + pathTransition,
+                            "-moz-transition: " + pathTransition,
+                            "transition: " + pathTransition,
+                        ].join(";");
+                        /*
+                        gaugeValueElem.style = [
+                          "fill: " + c,
+                          "-webkit-transition: " + textTransition,
+                          "-moz-transition: " + textTransition,
+                          "transition: " + textTransition,
+                        ].join(";");
+                        */
+                    }
+
+                    instance = {
+                        setMaxValue: function (max) {
+                            limit = max;
+                        },
+                        setValue: function (val) {
+                            value = normalize(val, min, limit);
+                            if (gaugeColor) {
+                                setGaugeColor(value, 0)
+                            }
+                            updateGauge(value);
+                        },
+                        setValueAnimated: function (val, duration) {
+                            var oldVal = value;
+                            value = normalize(val, min, limit);
+                            if (oldVal === value) {
+                                return;
+                            }
+
+                            if (gaugeColor) {
+                                setGaugeColor(value, duration);
+                            }
+                            Animation({
+                                start: oldVal || 0,
+                                end: value,
+                                duration: duration || 1,
+                                step: function (val, frame) {
+                                    updateGauge(val, frame);
+                                }
+                            });
+                        },
+                        getValue: function () {
+                            return value;
+                        }
+                    };
+
+                    initializeGauge(gaugeContainer);
+                    instance.setValue(value);
+                    return instance;
+                };
+            })();
+
+            return Gauge;
+        });
+    </script>
+
+    <script>
+        toolSimpleLeverage = {};
+        //+----------------------------------------------------+
+        //|                    Utils                           |
+        //+----------------------------------------------------+
+        function debounce(func, delay) {
+            // A timer variable to track the delay period
+            let timer;
+            // Return a function that takes arguments
+            return function (...args) {
+                // Clear the previous timer if any
+                clearTimeout(timer);
+                // Set a new timer that will execute the function after the delay period
+                timer = setTimeout(() => {
+                    // Apply the function with arguments
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+        function throttle(func, interval) {
+            // A flag variable to track whether the function is running or not
+            let isRunning = false;
+            // Return a function that takes arguments
+            return function (...args) {
+                // If the function is not running
+                if (!isRunning) {
+                    // Set the flag to true
+                    isRunning = true;
+                    // Apply the function with arguments
+                    func.apply(this, args);
+                    // Set a timer that will reset the flag after the interval
+                    setTimeout(() => {
+                        // Set the flag to false
+                        isRunning = false;
+                    }, interval);
+                }
+            };
+        }
+        function throttleDebounce(func, delay) {
+            let timeoutId;
+            let lastCall = 0;
+            let lastArgs;
+
+            return function (...args) {
+                const now = Date.now();
+                lastArgs = args;
+                const remaining = delay - (now - lastCall);
+
+                // Clear the debounce timeout
+                clearTimeout(timeoutId);
+
+                if (remaining <= 0) {
+                    // Throttle: Execute immediately
+                    func.apply(this, args);
+                    lastCall = now;
+                } else {
+
+                    // Debounce: Schedule the last call to be executed after the delay
+                    timeoutId = setTimeout(() => {
+                        func.apply(this, lastArgs);
+                        lastCall = Date.now();
+                    }, delay);
+                }
+            };
+        }
+
+        //+----------------------------------------------------+
+        //|                    Portfolio Logic                 |
+        //+----------------------------------------------------+
+        /**
+ * Computes the quantile (inverse CDF) of the normal distribution.
+ * @param {number} p - The probability (0 < p < 1).
+ * @param {number} mean - The mean (μ) of the normal distribution.
+ * @param {number} stdDev - The standard deviation (σ) of the normal distribution.
+ * @returns {number} The quantile corresponding to the probability p.
+ */
+        function normalQuantile(p, mean, stdDev) {
+            if (p <= 0 || p >= 1) {
+                throw new Error('The probability p must be between 0 and 1 (exclusive).');
+            }
+
+            // Coefficients in rational approximations
+            const a = [
+                -3.969683028665376e+01,
+                2.209460984245205e+02,
+                -2.759285104469687e+02,
+                1.383577518672690e+02,
+                -3.066479806614716e+01,
+                2.506628277459239e+00
+            ];
+
+            const b = [
+                -5.447609879822406e+01,
+                1.615858368580409e+02,
+                -1.556989798598866e+02,
+                6.680131188771972e+01,
+                -1.328068155288572e+01
+            ];
+
+            const c = [
+                -7.784894002430293e-03,
+                -3.223964580411365e-01,
+                -2.400758277161838e+00,
+                -2.549732539343734e+00,
+                4.374664141464968e+00,
+                2.938163982698783e+00
+            ];
+
+            const d = [
+                7.784695709041462e-03,
+                3.224671290700398e-01,
+                2.445134137142996e+00,
+                3.754408661907416e+00
+            ];
+
+            // Define break-points.
+            const plow = 0.02425;
+            const phigh = 1 - plow;
+            let q, r, x;
+
+            if (p < plow) {
+                // Rational approximation for lower region
+                q = Math.sqrt(-2 * Math.log(p));
+                x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+                    ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+            } else if (p <= phigh) {
+                // Rational approximation for central region
+                q = p - 0.5;
+                r = q * q;
+                x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+                    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+            } else {
+                // Rational approximation for upper region
+                q = Math.sqrt(-2 * Math.log(1 - p));
+                x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+                    ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+            }
+
+            // Refinement using Newton-Raphson method
+            for (let i = 0; i < 2; i++) {
+                const err = normalCDF(x) - p;
+                const pdf = (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * x * x);
+                x = x - err / pdf;
+            }
+
+            // Adjust for mean and standard deviation
+            return mean + stdDev * x;
+        }
+
+        /**
+         * Standard normal cumulative distribution function.
+         * @param {number} x
+         * @returns {number} CDF value
+         */
+        function normalCDF(x) {
+            return 0.5 * (1 + erf(x / Math.SQRT2));
+        }
+
+        /**
+         * Error function approximation.
+         * @param {number} x
+         * @returns {number} erf(x)
+         */
+        function erf(x) {
+            // Abramowitz and Stegun formula 7.1.26
+            // Absolute error less than 1.5e-7
+            const sign = x >= 0 ? 1 : -1;
+            x = Math.abs(x);
+
+            const t = 1 / (1 + 0.3275911 * x);
+            const a1 = 0.254829592;
+            const a2 = -0.284496736;
+            const a3 = 1.421413741;
+            const a4 = -1.453152027;
+            const a5 = 1.061405429;
+
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+
+        /*
+        const cdfDrawdownTime = (t, tau0) => {
+            const sqrtPi = Math.sqrt(Math.PI);
+            const sqrtTOverTau0 = Math.sqrt(t / tau0);
+            const expPart = Math.exp(-t / (4 * tau0));
+            const erfPart = math.erf(sqrtTOverTau0 / 2);
+            return (sqrtTOverTau0 * expPart) / sqrtPi + erfPart * (1 + 0.5 * t / tau0) - 0.5 * t / tau0;
+        }
+        */
+        const cdfDrawdownTime = (t, tau0) => {
+            return math.erf(Math.sqrt(t / (2 * tau0)));
+        }
+        const accumulate = (lr) => {
+            let acc = 0;
+            let acclr = new Array(lr.length);
+            for (let i = 0; i < lr.length; i++) {
+                acc += lr[i];
+                acclr[i] = acc;
+            }
+            return acclr;
+        }
+        const lrATH = (lr) => {
+            let ath = 0;
+            let acc = 0;
+            let athlr = new Array(lr.length);
+            for (let i = 0; i < lr.length; i++) {
+                acc += lr[i];
+                if (acc > ath) ath = acc;
+                athlr[i] = ath;
+            }
+            return athlr;
+        }
+        const underWater = (lr) => {
+            let ath = 0;
+            let acc = 0;
+            let uwlr = new Array(lr.length);
+            for (let i = 0; i < lr.length; i++) {
+                acc += lr[i];
+                if (acc > ath) ath = acc;
+                uwlr[i] = acc - ath;
+            }
+            return uwlr;
+        }
+        const underWaterDurations = (lr) => {
+            let cnt = 0;
+            let iStart = 0;
+            let iEnd = 0;
+            let minlr = 0;
+            let durations = [];
+            for (let i = 0; i < lr.length; i++) {
+                cnt++;
+                iEnd++;
+                if (lr[i] < minlr) minlr = lr[i];
+                if (lr[i] == 0 || iEnd == lr.length - 1) {
+                    durations.push({ startIndex: iStart, endIndex: iEnd, duration: cnt, minimum: minlr });
+                    iStart = i;
+                    iEnd = i;
+                    cnt = 0;
+                    minlr = 0;
+                }
+            }
+            durations.sort((a, b) => b.duration - a.duration);
+            return durations;
+        }
+        const seriesAddCdfDurations = (series) => {
+            const tpy = series.tpy;
+            const durations = series.underWaterDurations;
+            const uwlr = series.underWaterLogReturns;
+            const cdfP = Array.from({ length: uwlr.length }, (v, i) => (i + 1) / uwlr.length);
+            const cdfT = new Array(uwlr.length);
+            let i = 0;
+            let j = durations.length;
+            let ddT = 0;
+            while (j-- > 0) {
+                k = durations[j].duration;
+                ddT = k / tpy;
+                while (k-- > 0) {
+                    cdfT[i++] = ddT;
+                }
+            }
+            series.cdfDurations = { t: cdfT, p: cdfP }
+        }
+        const partitionMax = (uwlr, partitions = 1000) => {
+            let minUw = 0;
+            let partLength = Math.trunc((uwlr.length - 1) / partitions) + 1;
+            let newuwlr = new Array(partitions);
+            let parti = 0;
+            for (let i = 0; i < uwlr.length; i++) {
+                parti = Math.trunc(i / partLength);
+                if (i % partLength == 0) minUw = 0;
+                if (uwlr[i] < minUw) minUw = uwlr[i];
+                newuwlr[parti] = minUw;
+            }
+            return newuwlr;
+        }
+        const leverageLogModel = (logReturns, leverage) => {
+            return logReturns.map((lr) => Math.log(1 + leverage * (Math.exp(lr) - 1)));
+        }
+        const modelParams = (lr, tpy = 8760, interestRate = 0) => {
+            const mu = tpy * lr.reduce((acc, lr) => acc + lr, 0) / lr.length;
+            const sigma0 = Math.sqrt(tpy * lr.reduce((acc, lr) => acc + (lr - mu / tpy) ** 2, 0) / lr.length);
+            const mu0 = mu - Math.log(1 + interestRate);
+            const sharpe0 = mu0 / sigma0 + 0.5 * sigma0;
+            const k0 = sigma0 / sharpe0;
+            const tao0 = (sigma0 / mu0) ** 2;
+            const R0 = 0.5 * sigma0 ** 2 / mu0;
+            const CAGR0 = Math.exp(mu0) - 1;
+            const CAGR = Math.exp(mu) - 1;
+            const taoS0 = 1 / sharpe0 ** 2;
+            return { interestRate, CAGR, CAGR0, mu, mu0, sigma0, sharpe0, R0, A0: 1 / R0, k0, tao0, taoS0, wstar0: 1 / k0 };
+        }
+        const sample = (mu, sigma, years = 10, tpy = 8760, muadjust = true) => {
+            const randomFunc = d3.randomNormal(mu / tpy, sigma / Math.sqrt(tpy));
+            let lr = Array.from({ length: years * tpy }, randomFunc);
+            if (muadjust) {
+                const meanLr = lr.reduce((acc, lr) => acc + lr, 0) / lr.length;
+                lr = lr.map(lr => lr - meanLr + mu / tpy);
+            }
+            return lr;
+        }
+        //+----------------------------------------------------+
+        //|                    Plots                           |
+        //+----------------------------------------------------+
+        /*
+        const plotUnderWater = (uwlr, startdate, tpy = 8760) => {
+
+            const points = 1000;
+            const avgLogDD = uwlr.reduce((a, v) => a + v, 0) / uwlr.length;
+            const partuwlr = partitionMax(uwlr, points);
+            const pointtime = 1000 * 3600 * 8760 / tpy * uwlr.length / points;
+            const plot = Plot.plot({
+                title: "Underwater Plot",
+                subtitle: "Drawdown from ATH",
+                caption: "Shows drawdown over time",
+                grid: true,
+                y: { domain: [-100, 0], ticks: 10, percent: true, label: "Drawdown (%)", axis: "both" },
+                x: { ticks: 10, label: "Time", axis: "both" },
+                marks: [
+                    Plot.areaY(d3.range(1000).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), uw: Math.exp(partuwlr[i]) - 1 } }), { x: "t", y1: d => 0, y2: "uw", fill: "#244f8c", fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.ruleY([Math.exp(avgLogDD) - 1], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.crosshairX(d3.range(1000).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), uw: Math.exp(partuwlr[i]) - 1 } }), { x: "t", y: "uw", stroke: "#000", strokeWidth: 1, opacity: 0.5 }),
+                    Plot.frame()
+                ]
+            });
+            return plot;
+        }
+            */
+        const plotUnderWater = (uwlr, startdate, tpy = 8760) => {
+
+            const points = 1000;
+            const avgLogDD = uwlr.reduce((a, v) => a + v, 0) / uwlr.length;
+            const partuwlr = partitionMax(uwlr, points);
+            const pointtime = 1000 * 3600 * 8760 / tpy * uwlr.length / points;
+            const plot = Plot.plot({
+                title: "Underwater Plot",
+                subtitle: "Drawdown from ATH",
+                caption: "Shows drawdown over time",
+                grid: true,
+                y: { domain: [-100, 0], ticks: 10, percent: true, label: "Drawdown (%)", axis: "both" },
+                x: { ticks: 10, label: "Time", axis: "both", type: "utc" },
+                marks: [
+                    Plot.areaY(d3.range(1000).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), uw: Math.exp(partuwlr[i]) - 1 } }), { x: "t", y1: d => 0, y2: "uw", fill: "#244f8c", fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.ruleY([Math.exp(avgLogDD) - 1], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.crosshairX(d3.range(1000).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), uw: Math.exp(partuwlr[i]) - 1 } }), { x: "t", y: "uw", stroke: "#000", strokeWidth: 1, opacity: 0.5 }),
+                    Plot.frame()
+                ]
+            });
+            return plot;
+        }
+        const plotDrawdownProfile = (series) => {
+            const uwlr = series.underWaterLogReturns;
+            const avgLogDD = uwlr.reduce((a, v) => a + v, 0) / uwlr.length;
+            const suwlr = uwlr.toSorted((a, b) => b - a);
+            let R0 = series.params.R0;
+            if (R0 > 100000 || R0 < 0) R0 = 100000;
+            const plot = Plot.plot({
+                title: "Drawdown Profile",
+                subtitle: "Underwater time distribution",
+                caption: "Shows distribution of drawdown over time",
+                grid: true,
+                y: { ticks: 10, percent: true, label: "Drawdown (%)", axis: "both" },
+                x: { ticks: 10, percent: true, label: "P-confidence (%)", axis: "both" },
+                marks: [
+                    ...([0, 0.025, 0.05, 0.1, 0.2, 0.4, 1, 2.5, 5, 10, 20, 40, 10000]).map((R, i, Rs) => Plot.areaY(d3.range(1001).map(v => { return { p: v / 1000 } }), { x: "p", y1: d => (1 - d.p) ** Rs[Math.max(0, i - 1)] - 1, y2: d => (1 - d.p) ** R - 1, fill: ["#244f8c", "#3c7bad", "#5d9cc2", "#82b6ce", "#a6cbd3", "#c5d8cf", "#d6d8bf", "#dcccaa", "#d7b493", "#cb947c", "#b86f66", "#9f4c51", "#82333f"][i], fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.15, strokeWidth: 1 })),
+                    Plot.areaY(d3.range(1001).map(v => { return { p: v / 1000, xi: v } }), { x: "p", y1: d => 0, y2: d => (1 - d.p) ** R0 - 1, fill: "#440088", fillOpacity: 0.2, stroke: "black", strokeOpacity: 0.5, strokeWidth: 3 }),
+                    Plot.areaY(d3.range(1001).map(v => { return { p: v / 1000, xi: v } }), { x: "p", y1: d => 0, y2: d => Math.exp(suwlr[Math.max(0, Math.floor(suwlr.length / 1000 * d.xi) - 1)]) - 1, fill: "#aa00aa", fillOpacity: 0.3, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.crosshairX(d3.range(1001).map(v => { return { p: v / 1000, yp: Math.exp(suwlr[Math.max(0, Math.floor(suwlr.length / 1000 * v) - 1)]) - 1 } }), { x: "p", y: "yp", stroke: "#000", strokeWidth: 1, opacity: 0.5 }),
+                    Plot.ruleY([Math.exp(avgLogDD) - 1], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.ruleX([1 - Math.exp(-1)], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.frame()
+
+                ]
+            });
+            return plot;
+        }
+        const plotDrawdownTimeProfile = (series) => {
+            //const avgLogDD = uwlr.reduce((a, v) => a + v, 0) / uwlr.length;
+            //const suwlr = uwlr.toSorted((a, b) => b - a);
+            const cdfT = series.cdfDurations.t;
+            const avgT = cdfT.reduce((a, v) => a + v, 0) / cdfT.length;
+            const Sharpe = series.params.sharpe0;
+            const tao0 = series.params.tao0;
+            const plot = Plot.plot({
+                title: "Drawdown Durations Profile",
+                subtitle: "Underwater Durations distribution",
+                caption: "Shows distribution of durations over time with Sharpe = " + Sharpe.toFixed(2) + " and tao0 = " + tao0.toFixed(2),
+                grid: true,
+                y: { ticks: 10, label: "Drawdown Duration (years)", axis: "both", domain: [0, 12 / Sharpe ** 2] },
+                x: { ticks: 10, percent: true, label: "P-confidence (%)", axis: "both" },
+                marks: [
+                    ...([0, 0.025, 0.05, 0.1, 0.2, 0.4, 1, 2.5, 5, 10, 20, 40, 10000]).map((R, i, Rs) => Plot.areaX(d3.range(1001).map(v => { return { t: 12 / Sharpe ** 2 * v / 1000 } }), { y: "t", x1: d => cdfDrawdownTime(d.t, ((1 + Rs[Math.max(0, i - 1)]) / Sharpe) ** 2), x2: d => cdfDrawdownTime(d.t, ((1 + R) / Sharpe) ** 2), fill: ["#244f8c", "#3c7bad", "#5d9cc2", "#82b6ce", "#a6cbd3", "#c5d8cf", "#d6d8bf", "#dcccaa", "#d7b493", "#cb947c", "#b86f66", "#9f4c51", "#82333f"][i], fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.15, strokeWidth: 1 })),
+                    Plot.areaX(d3.range(1001).map(v => { return { t: 12 / Sharpe ** 2 * v / 1000 } }), { y: "t", x1: d => cdfDrawdownTime(d.t, tao0), x2: d => 1, fill: "#440088", fillOpacity: 0.2, stroke: "black", strokeOpacity: 0.5, strokeWidth: 3 }),
+                    Plot.areaX(d3.range(1001).map(v => { return { p: v / 1000, xi: v } }), { x1: "p", x2: d => 1, y: d => cdfT[Math.max(0, Math.floor(cdfT.length / 1000 * d.xi) - 1)], fill: "#aa00aa", fillOpacity: 0.3, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    //Plot.crosshairX(d3.range(1001).map(v => { return { p: v / 1000, yp: Math.exp(suwlr[Math.max(0, Math.floor(suwlr.length / 1000 * v) - 1)]) - 1 } }), { x: "p", y: "yp", stroke: "#000", strokeWidth: 1, opacity: 0.5 }),
+                    Plot.ruleX([0.683], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.ruleY([avgT], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.frame()
+
+                ]
+            });
+            return plot;
+        }
+        const plotLongtermDrawdownProfile = (R0) => {
+            const avgLogDD = -R0;
+            //const suwlr = uwlr.toSorted((a, b) => b - a);
+            const plot = Plot.plot({
+                title: "Long-Term Drawdown Profile",
+                subtitle: "Underwater Long-Term distribution",
+                caption: "Shows Long-Term distribution of drawdown over time",
+                grid: true,
+                y: { ticks: 10, percent: true, label: "Drawdown (%)", axis: "both" },
+                x: { ticks: 10, percent: true, label: "P-confidence (%)", axis: "both" },
+                marks: [
+                    ...([0, 0.025, 0.05, 0.1, 0.2, 0.4, 1, 2.5, 5, 10, 20, 40, 10000]).map((R, i, Rs) => Plot.areaY(d3.range(1001).map(v => { return { p: v / 1000 } }), { x: "p", y1: d => (1 - d.p) ** Rs[Math.max(0, i - 1)] - 1, y2: d => (1 - d.p) ** R - 1, fill: ["#244f8c", "#3c7bad", "#5d9cc2", "#82b6ce", "#a6cbd3", "#c5d8cf", "#d6d8bf", "#dcccaa", "#d7b493", "#cb947c", "#b86f66", "#9f4c51", "#82333f"][i], fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.15, strokeWidth: 1 })),
+                    Plot.areaY(d3.range(1001).map(v => { return { p: v / 1000, xi: v } }), { x: "p", y1: d => 0, y2: d => (1 - d.p) ** R0 - 1, fill: "#aa00aa", fillOpacity: 0.3, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.crosshairX(d3.range(1001).map(v => { return { p: v / 1000, yp: Math.exp(suwlr[Math.max(0, Math.floor(suwlr.length / 1000 * v) - 1)]) - 1 } }), { x: "p", y: "yp", stroke: "#000", strokeWidth: 1, opacity: 0.5 }),
+                    Plot.ruleY([Math.exp(avgLogDD) - 1], { stroke: "black", strokeOpacity: 0.5, strokeWidth: 1.5, strokeDasharray: [6, 2] }),
+                    Plot.frame()
+
+                ]
+            });
+            return plot;
+        }
+        /*
+        const plotUnderwaterDurations = (acclr, athlr, uwDurations, startdate, tpy = 8760) => {
+            const points = 1000;
+
+            const pointtime = 1000 * 3600 * 8760 / tpy * acclr.length / points;
+            const stepi = acclr.length / (points - 1);
+            const plot = Plot.plot({
+                title: "Dradown Durations",
+                subtitle: "Top-5 Dradown Durations",
+                caption: "Shows the top 5 drawdown durations over time",
+                grid: true,
+                y: { ticks: 10, label: "x-Return", axis: "both",type:"log" },
+                x: { ticks: 10, label: "Time", axis: "both" },
+                marks: [
+                    Plot.areaY(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]), ath: Math.exp(athlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y1: "acc", y2: "ath", fill: "#0000aa", fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#000077", strokeOpacity: 0.25 }),
+                    Plot.rectX(uwDurations.slice(0, 5).map((v, i) => { return { t1: new Date(startdate + v.startIndex *1000 * 3600 * 8760 / tpy), t2: new Date(startdate + v.endIndex * 1000 * 3600 * 8760 / tpy) } }), { x1: "t1", x2: "t2", fill: "#aa00aa", fillOpacity: 0.1, stroke: "black", strokeOpacity: 0.1, strokeWidth: 1 }),
+                    Plot.crosshairX(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#220077", strokeOpacity: 0.5 }),
+
+                    Plot.frame()
+
+                ]
+            })
+            return plot;
+        }
+            */
+        const plotUnderwaterDurations = (acclr, athlr, uwDurations, startdate, tpy = 8760) => {
+            const points = 1000;
+
+            const pointtime = 1000 * 3600 * 8760 / tpy * acclr.length / points;
+            const stepi = acclr.length / (points - 1);
+            const plot = Plot.plot({
+                title: "Dradown Durations",
+                subtitle: "Top-5 Drawdown Durations",
+                caption: "Shows the top 5 drawdown durations over time",
+                grid: true,
+                y: { ticks: 10, label: "x-Return", axis: "both", type: "log" },
+                x: { ticks: 10, label: "Time", axis: "both", type: "utc" },
+                marks: [
+                    Plot.areaY(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]), ath: Math.exp(athlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y1: "acc", y2: "ath", fill: "#0000aa", fillOpacity: 0.25, stroke: "black", strokeOpacity: 0.5, strokeWidth: 2 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#000077", strokeOpacity: 0.25 }),
+                    Plot.rectX(uwDurations.slice(0, 5).map((v, i) => { return { t1: startdate + v.startIndex * 1000 * 3600 * 8760 / tpy, t2: startdate + v.endIndex * 1000 * 3600 * 8760 / tpy } }), { x1: "t1", x2: "t2", fill: "#aa00aa", fillOpacity: 0.1, stroke: "black", strokeOpacity: 0.1, strokeWidth: 1 }),
+                    Plot.crosshairX(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#220077", strokeOpacity: 0.5 }),
+
+                    Plot.frame()
+
+                ]
+            })
+            return plot;
+        }
+        /*
+        const plotLeverageReturns = (acclr, acclevlr, accmaxlr, startdate, tpy = 8760) => {
+            const points = 1000;
+
+            const pointtime = 1000 * 3600 * 8760 / tpy * acclr.length / points;
+            const stepi = acclr.length / (points - 1);
+            const plot = Plot.plot({
+                title: "Leverage Reference Plot",
+                subtitle: "Kelly Optimal Comparison",
+                caption: "Shows Leveraged Accumulated Log-Returns over time compared to unleveraged and Kelly Optimal Leverage",
+                grid: true,
+                y: { ticks: 10, label: "Return (%)", axis: "both", type: "log", tickFormat: ((f) => (x) => f((x - 1) * 100))(d3.format("+d")) },
+                x: { ticks: 10, label: "Time", axis: "both" },
+                marks: [
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#000077", strokeOpacity: 0.5 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(accmaxlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#007700", strokeOpacity: 0.5 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclevlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#770000", strokeOpacity: 0.5 }),
+                    Plot.crosshairX(d3.range(points).map((v, i) => { return { t: new Date(startdate + Math.floor(i * pointtime)), acc: Math.exp(acclevlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#220077", strokeOpacity: 0.5 }),
+
+                    Plot.frame()
+
+                ]
+            })
+            return plot;
+        }
+            */
+        const plotLeverageReturns = (acclr, acclevlr, accmaxlr, startdate, tpy = 8760) => {
+            const points = 1000;
+
+            const pointtime = 1000 * 3600 * 8760 / tpy * acclr.length / points;
+            const stepi = acclr.length / (points - 1);
+            const plot = Plot.plot({
+                title: "Leverage Reference Plot",
+                subtitle: "Kelly Optimal Comparison",
+                caption: "Shows Leveraged Accumulated Log-Returns over time compared to unleveraged and Kelly Optimal Leverage",
+                grid: true,
+                y: { ticks: 10, label: "Return (%)", axis: "both", type: "log", tickFormat: ((f) => (x) => f((x - 1) * 100))(d3.format("+d")) },
+                x: { ticks: 10, label: "Time", axis: "both", type: "utc" },
+                marks: [
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#000077", strokeOpacity: 0.5 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(accmaxlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#007700", strokeOpacity: 0.5 }),
+                    Plot.lineY(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclevlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#770000", strokeOpacity: 0.5 }),
+                    Plot.crosshairX(d3.range(points).map((v, i) => { return { t: startdate + Math.floor(i * pointtime), acc: Math.exp(acclevlr[Math.max(0, Math.floor(stepi * i) - 1)]) } }), { x: "t", y: "acc", stroke: "#220077", strokeOpacity: 0.5 }),
+
+                    Plot.frame()
+
+                ]
+            })
+            return plot;
+        }
+        /*
+        const updateOutputTable = () => {
+            let html = `<thead><th>Param</th><th>Referens Portfolio</th><th>Kelly Max Portfolio</th><th>Leveraged Portfolio</th></thead><tbody>`;
+            Object.entries(toolSimpleLeverage.seriesReference.params).forEach(([k, v]) => {
+                html += "<tr><td>" + k + "</td><td>" + toolSimpleLeverage.seriesReference.params[k].toFixed(4) + "</td><td>" + toolSimpleLeverage.seriesMax.params[k].toFixed(4) + "</td><td>" + toolSimpleLeverage?.seriesLeverage?.params[k].toFixed(4) + "</td></tr>";
+            });
+            //html += "<tr><td>" + "Erf" + "</td><td>" + (math.erf(0.2)).toFixed(4) + "</td><td>" + (math.erf(1)).toFixed(4) + "</td><td>" + (math.erf(2)).toFixed(4) + "</td></tr>";
+            html += "</tbody>";
+            document.getElementById("output-table").innerHTML = html;
+        }
+        
+        const updateLeverageTable = () => {
+            let html = `<thead><th>Risk Level R0</th><th>Relative Leverage k0</th><th>Absolute Leverage</th><th>Expected DrawDown from lgDD<th>DrawDown(95%-confidence)</th><th>Theoretical mu0</th><th>Theoretical CAGR0</th></thead><tbody>`;
+            let seriesRQ = true;
+            const addRow = (R0, rowStyle = "") => {
+                return "<tr style='" + rowStyle + "'><td>" + R0.toFixed(3) + "</td><td>" + (2 * R0 / (1 + R0)).toFixed(2) + "</td><td>" + (2 * R0 / (1 + R0) * toolSimpleLeverage.seriesReference.params.wstar0).toFixed(2) + "</td><td>" + (math.exp(-R0) - 1).toFixed(2) + "%</td><td>" + (100 * ((1 - 0.95) ** R0 - 1)).toFixed(2) + "%</td><td>" +
+                    (2 * R0 / (1 + R0) ** 2 * toolSimpleLeverage.seriesReference.params.sharpe0 ** 2).toFixed(4) + "</td><td>" + (100 * (Math.exp((2 * R0 / (1 + R0) ** 2 * toolSimpleLeverage.seriesReference.params.sharpe0 ** 2)) - 1)).toFixed(2) + "%</td></tr>"
+            };
+            const seriesR = toolSimpleLeverage.seriesLeverage.params.R0;
+            [0.025, 0.05, 0.1, 0.2, 0.4, 1].forEach(R0 => {
+
+                if (seriesRQ && seriesR < R0) {
+                    seriesRQ = false;
+                    html += addRow(seriesR, "font-weight:bold");
+                }
+                html += addRow(R0);
+            });
+            if (seriesRQ) html += addRow(seriesR, "font-weight:bold");
+            html += "</tbody>";
+            document.getElementById("output-leverage-table").innerHTML = html;
+        }
+        */
+        const labelsAndFormats = {
+            interestRate: {
+                label: 'Interest Rate',
+                format: (v) => (v * 100).toFixed(2) + '%',
+            },
+            CAGR: {
+                label: 'CAGR',
+                format: (v) => (v * 100).toFixed(2) + '%',
+            },
+            CAGR0: {
+                label: 'CAGR₀',
+                format: (v) => (v * 100).toFixed(2) + '%',
+            },
+            mu: {
+                label: 'μ',
+                format: (v) => v.toFixed(4),
+            },
+            mu0: {
+                label: 'μ₀',
+                format: (v) => v.toFixed(4),
+            },
+            sigma0: {
+                label: 'σ₀',
+                format: (v) => v.toFixed(4),
+            },
+            sharpe0: {
+                label: 'Sharpe₀',
+                format: (v) => v.toFixed(2),
+            },
+            R0: {
+                label: 'R₀',
+                format: (v) => v.toFixed(4),
+            },
+            A0: {
+                label: 'A₀',
+                format: (v) => v.toFixed(4),
+            },
+            k0: {
+                label: 'k₀',
+                format: (v) => v.toFixed(4),
+            },
+            tao0: {
+                label: 'τ₀',
+                format: (v) => v.toFixed(2) + ' y',
+            },
+            taoS0: {
+                label: 'τₛ₀',
+                format: (v) => v.toFixed(2) + ' y',
+            },
+            wstar0: {
+                label: 'w₀*',
+                format: (v) => v.toFixed(4),
+            },
+        };
+
+        const updateOutputTable = () => {
+            // Retrieve and copy parameter objects
+            const seriesReferenceParams = toolSimpleLeverage.seriesReference.params;
+            const seriesMaxParams = toolSimpleLeverage.seriesMax.params;
+            const seriesLeverageParams = toolSimpleLeverage.seriesLeverage
+                ? toolSimpleLeverage.seriesLeverage.params
+                : null;
+
+
+            // Build the HTML table
+            let html = `<thead><tr><th>Param</th><th>Reference Portfolio</th><th>Kelly Max Portfolio</th><th>Leveraged Portfolio</th></tr></thead><tbody>`;
+
+            Object.entries(seriesReferenceParams).forEach(([key, value]) => {
+                const labelFormat = labelsAndFormats[key];
+                if (labelFormat) {
+                    const label = labelFormat.label;
+                    const format = labelFormat.format;
+                    const refValue = seriesReferenceParams[key] !== undefined ? format(seriesReferenceParams[key]) : 'N/A';
+                    const maxValue = seriesMaxParams[key] !== undefined ? format(seriesMaxParams[key]) : 'N/A';
+                    const levValue =
+                        seriesLeverageParams && seriesLeverageParams[key] !== undefined
+                            ? format(seriesLeverageParams[key])
+                            : 'N/A';
+                    html += `<tr><td>${label}</td><td>${refValue}</td><td>${maxValue}</td><td>${levValue}</td></tr>`;
+                }
+            });
+
+            html += '</tbody>';
+            document.getElementById('output-table').innerHTML = html;
+        };
+        const updateLeverageTable = () => {
+            const data = [];
+            const R0_values = [0.025, 0.05, 0.1, 0.2, 0.4, 1];
+            const seriesR = toolSimpleLeverage.seriesLeverage.params.R0;
+
+            const calculateRow = (R0) => {
+                return {
+                    R0: R0.toFixed(3),
+                    k0: (2 * R0 / (1 + R0)).toFixed(2),
+                    AbsoluteLeverage: (
+                        (2 * R0) /
+                        (1 + R0) *
+                        toolSimpleLeverage.seriesReference.params.wstar0
+                    ).toFixed(2),
+                    ExpectedDrawDown: ((Math.exp(-R0) - 1) * 100).toFixed(2) + "%",
+                    DrawDown95: (100 * ((1 - 0.95) ** R0 - 1)).toFixed(2) + "%",
+                    TheoreticalMu0: (
+                        (2 * R0) /
+                        (1 + R0) ** 2 *
+                        toolSimpleLeverage.seriesReference.params.sharpe0 ** 2
+                    ).toFixed(4),
+                    TheoreticalCAGR0:
+                        (
+                            (Math.exp(
+                                (2 * R0) /
+                                (1 + R0) ** 2 *
+                                toolSimpleLeverage.seriesReference.params.sharpe0 ** 2
+                            ) -
+                                1) *
+                            100
+                        ).toFixed(2) + "%",
+                    isSeriesR: false,
+                };
+            };
+
+            let seriesRQ = true;
+            R0_values.forEach((R0) => {
+                if (seriesRQ && seriesR < R0) {
+                    seriesRQ = false;
+                    data.push({ ...calculateRow(seriesR), isSeriesR: true });
+                }
+                data.push(calculateRow(R0));
+            });
+            if (seriesRQ) data.push({ ...calculateRow(seriesR), isSeriesR: true });
+
+            // Now transpose the data
+            let html = "<thead><tr><th>Risk Level, R0</th>";
+            data.forEach((d) => {
+                let thStyle = d.isSeriesR ? " style='font-weight:bold'" : "";
+                html += `<th${thStyle}>${d.R0}</th>`;
+            });
+            html += "</tr></thead><tbody>";
+
+            const calculations = [
+                { label: "Relative Leverage k0", key: "k0" },
+                { label: "Absolute Leverage", key: "AbsoluteLeverage" },
+                { label: "Expected DrawDown from lgDD", key: "ExpectedDrawDown" },
+                { label: "DrawDown(95%-confidence)", key: "DrawDown95" },
+                { label: "Theoretical mu0", key: "TheoreticalMu0" },
+                { label: "Theoretical CAGR0", key: "TheoreticalCAGR0" },
+            ];
+
+            calculations.forEach((calc) => {
+                html += `<tr><td>${calc.label}</td>`;
+                data.forEach((d) => {
+                    let tdStyle = d.isSeriesR ? " style='font-weight:bold'" : "";
+                    html += `<td${tdStyle}>${d[calc.key]}</td>`;
+                });
+                html += "</tr>";
+            });
+
+            html += "</tbody>";
+
+            document.getElementById("output-leverage-table").innerHTML = html;
+        };
+
+        //+----------------------------------------------------+
+        //|                    Screen Update                   |
+        //+----------------------------------------------------+
+
+        function leveragePlots(kleverage) {
+            const leverage = kleverage * toolSimpleLeverage.seriesReference.params.wstar0;
+            const lr = toolSimpleLeverage.seriesReference.logReturns;
+            toolSimpleLeverage.seriesLeverage = modelSeries(leverageLogModel(lr, leverage), toolSimpleLeverage.startdate, toolSimpleLeverage.tpy);
+            //const newLr = lr.map((lr) => Math.log(1 + leverage * (Math.exp(lr) - 1)));
+
+            const tradingVolume = toolSimpleLeverage.seriesLeverage.logReturns.map((lrx, i) => leverage * (1 - Math.exp(lr[i] - lrx)));
+            const avgVolumePerDay = tpy / 365 * tradingVolume.reduce((a, b) => a + Math.abs(b), 0) / tradingVolume.length;
+            //const newParams = modelParams(newLr, tpy, 0);
+            const newParams = toolSimpleLeverage.seriesLeverage.params;
+            //console.log(newParams);
+            updateOutputTable();
+            updateLeverageTable();
+
+
+            //const uwnewlr = underWater(newLr);
+            //const accnewLr = accumulate(newLr);
+            //const athnewLr = lrATH(newLr);
+            //const uwNewDurations = underWaterDurations(uwnewlr);
+
+            let plot = plotUnderWater(toolSimpleLeverage.seriesLeverage.underWaterLogReturns, toolSimpleLeverage.seriesLeverage.startdate, toolSimpleLeverage.seriesLeverage.tpy);
+            let div = document.querySelector("#plotUnderWater");
+
+            let figure = div.querySelector('figure');
+            if (figure) { div.replaceChild(plot, figure) } else { div.append(plot) };
+            plot = plotDrawdownProfile(toolSimpleLeverage.seriesLeverage);
+            div = document.querySelector("#plotDrawdownProfile");
+
+            figure = div.querySelector('figure');
+            if (figure) { div.replaceChild(plot, figure) } else { div.append(plot) };
+            plot = plotUnderwaterDurations(toolSimpleLeverage.seriesLeverage.accumulatedLogReturns, toolSimpleLeverage.seriesLeverage.athLogReturns, toolSimpleLeverage.seriesLeverage.underWaterDurations, toolSimpleLeverage.seriesLeverage.startdate, toolSimpleLeverage.seriesLeverage.tpy);
+            div = document.querySelector("#plotUnderwaterDurations");
+
+            figure = div.querySelector('figure');
+            if (figure) { div.replaceChild(plot, figure) } else { div.append(plot) };
+
+            plot = plotLeverageReturns(toolSimpleLeverage.seriesReference.accumulatedLogReturns, toolSimpleLeverage.seriesLeverage.accumulatedLogReturns, toolSimpleLeverage.seriesMax.accumulatedLogReturns, toolSimpleLeverage.startdate, toolSimpleLeverage.tpy);
+            div = document.querySelector("#plotLeverageReturns");
+
+            figure = div.querySelector('figure');
+            if (figure) { div.replaceChild(plot, figure) } else { div.append(plot) };
+
+            plot = plotDrawdownTimeProfile(toolSimpleLeverage.seriesLeverage);
+            div = document.querySelector("#plotDrawdownTimeProfile");
+
+            figure = div.querySelector('figure');
+            if (figure) { div.replaceChild(plot, figure) } else { div.append(plot) };
+
+            gauge1.setValueAnimated(100 * newParams.mu0, 0.1);
+            gauge2.setValueAnimated(100 * newParams.sigma0, 0.1);
+            gauge3.setValueAnimated(100 * newParams.sharpe0, 0.1);
+            gauge4.setValueAnimated(100 * newParams.R0, 0.1);
+            gauge5.setValueAnimated(100 * newParams.tao0, 0.1);
+            gauge6.setValueAnimated(100 * leverage, 0.1);
+            gauge7.setValueAnimated(100 * avgVolumePerDay, 0.1);
+            gauge8.setValueAnimated(100 * newParams.k0, 0.1);
+
+        }
+
+        const inputSampleData = () => {
+            mu = document.getElementById("mu").value;
+            sigma = document.getElementById("sigma").value;
+            years = document.getElementById("years").value;
+            tpy = document.getElementById("tpy").value;
+            startdate = Date.parse(document.getElementById("date").value);
+            return { mu, sigma, years, tpy, startdate };
+        }
+
+        const modelSeries = (logReturns, startdate, tpy = 8760) => {
+            const series = {};
+            series.logReturns = logReturns;
+            series.tpy = tpy;
+            series.startdate = startdate;
+            series.params = modelParams(series.logReturns, series.tpy, 0);
+            series.underWaterLogReturns = underWater(series.logReturns);
+            series.sortedUnderWaterLogReturns = series.underWaterLogReturns.toSorted((a, b) => b - a);
+
+            series.accumulatedLogReturns = accumulate(series.logReturns);
+            series.athLogReturns = lrATH(series.logReturns);
+            series.underWaterDurations = underWaterDurations(series.underWaterLogReturns);
+            seriesAddCdfDurations(series);
+            return series;
+
+        }
+        const runSample = () => {
+            const inputData = inputSampleData();
+            toolSimpleLeverage.startdate = inputData.startdate;
+            toolSimpleLeverage.years = inputData.years;
+            toolSimpleLeverage.tpy = inputData.tpy;
+            let lr = sample(inputData.mu, inputData.sigma, inputData.years, inputData.tpy, document.getElementById("muadjust").checked);
+            toolSimpleLeverage.seriesReference = modelSeries(lr, inputData.startdate, inputData.tpy);
+            toolSimpleLeverage.seriesMax = modelSeries(leverageLogModel(lr, toolSimpleLeverage.seriesReference.params.wstar0), inputData.startdate, inputData.tpy);
+            toolSimpleLeverage.seriesLeverage = modelSeries(lr, inputData.startdate, inputData.tpy);
+            leveragePlots(document.getElementById('slider').value / 100);
+
+        }
+
+        //console.log(toolSimpleLeverage);
+        /*        
+                let startdate = Date.UTC(2020, 0, 1);
+                let sharpe = 2;
+                let riskR = 0.2;
+                let k0 = 2 / (1 + 1 / riskR);
+                let sigma = k0 * sharpe;
+                let mu = 0.5 * k0 * (2 - k0) * (sharpe ** 2);
+                let tao = (1 + riskR) ** 2 / sharpe ** 2;
+                let tpy = 8760;
+                let years = 10;
+                let lr = Array.from({ length: years * tpy }, d3.randomNormal(mu / tpy, sigma / Math.sqrt(tpy)));
+                let meanLr = lr.reduce((acc, lr) => acc + lr, 0) / lr.length;
+                lr = lr.map(lr => lr - meanLr + mu / tpy);
+                let samplesigma = Math.sqrt(tpy * lr.reduce((acc, lr) => acc + (lr - mu / tpy) ** 2, 0) / lr.length);
+                let lambda0 = (0.5 + mu / samplesigma ** 2);
+                k0 = 1 / lambda0;
+                let maxlr = lr.map((lr) => Math.log(1 + lambda0 * (Math.exp(lr) - 1)));
+                let uwlr = underWater(lr);
+                let suwlr = uwlr.toSorted((a, b) => b - a);
+                //let partuwlr = partitionMax(uwlr, 1000);
+                let accLr = accumulate(lr);
+                let accmaxlr = accumulate(maxlr);
+                let athLr = lrATH(lr);
+                let uwDurations = underWaterDurations(uwlr);
+                let totalDuration = uwDurations.reduce((a, v) => a + v.duration, 0);
+        */
+        const throttlePlots = throttleDebounce(leveragePlots, 100);
+        let gauge1, gauge2, gauge3, gauge4, gauge5, gauge6, gauge7, gauge8;
+
+    </script>
+
+    <!-- Gridstack JS -->
+
+    <!-- Initialize Gridstack -->
+    <script>
+        /*
+        const makeGridStackStyle = (columns) => {
+            const stylearr = Array.from({ length: (columns) }, (v, i) => {
+                if (i == 0) { return `.gs-${columns} > .grid-stack-item { width: ${(100 * (i + 1) / columns).toFixed(4)}%;}` }
+                else {
+                    return `
+            .gs-${columns} > .grid-stack-item[gs-x="${i}"] { left: ${(100 * (i) / columns).toFixed(4)}%;}
+            .gs-${columns} > .grid-stack-item[gs-w="${i + 1}"] { width: ${(100 * (i + 1) / columns).toFixed(4)}%;}            
+            `}
+            });
+            const style = stylearr.join('');
+            const styleElement = document.createElement('style');
+            styleElement.innerHTML = style;
+            document.head.appendChild(styleElement);
+        }
+        makeGridStackStyle(24);
+        */
+        let widgetSelector = `
+            <div class="tabbed-inputs">
+                <div class="tabs">
+                    <div class="tab" data-tab="sample">Sample</div>
+                    <div class="tab" data-tab="file">File</div>
+                    <div class="tab" data-tab="api">API</div>
+                </div>
+                <div class="tab-content">
+                    <div id="sample" class="tab-pane">
+                        <table>
+                            <tr>
+                                <td><label for="startdate">Startdate:</label></td>
+                                <td><input type="date" id="date" name="date" value="2020-01-01"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="years">Years:</label></td>
+                                <td><input type="text" id="years" name="years" value="10"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="tpy">Ticks Per Year:</label></td>
+                                <td><input type="text" id="tpy" name="tpy" value="8760"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="muadjust">μ Adjust:</label></td>
+                                <td><input type="checkbox" id="muadjust" name="muadjust" value="true" checked></td>
+                            </tr>
+                            <tr>
+                                <td><label for="mu">μ (Mu):</label></td>
+                                <td><input type="text" id="mu" name="mu" value="0.5"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="sigma">σ (Sigma):</label></td>
+                                <td><input type="text" id="sigma" name="sigma" value="0.5"></td>
+                            </tr>
+                            <tr>
+                                <td><label for="new-sample">Run New Sample:</label></td>
+                                <td><input type="button" id="new-sample" name="new-sample" value="Sample" onclick="runSample()">
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="file" class="tab-pane">
+                        <label for="file-input">Choose file:</label>
+                        <input type="file" id="file-input" name="file-input">
+                    </div>
+                    <div id="api" class="tab-pane">
+                        <label for="quote-asset">Quote Asset:</label>
+                        <input type="text" id="quote-asset" name="quote-asset"><br>
+                            <label for="asset">Asset:</label>
+                            <input type="text" id="asset" name="asset">
+                    </div>
+                </div>
+            </div>`;
+        let widgetSlider = `
+            <div> <h2>Relative Leverage Slider for Kelly - k</h2></div>
+            <div class="slider-input">
+                <input type="range" id="slider" min="0" max="200" value="50">
+                <input type="number" id="slider-value" min="0" max="200" value="50">
+            </div>`;
+        let widgetTest = `<div class="flex flex-col items-center justify-center w-full h-full text-indigo-600">
+                            <svg class="size-8" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hand">
+                                <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" /><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+                                <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+                            </svg>
+                            <p>Drag me !</p>
+                        </div>`;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var simple = [
+                { x: 0, y: 0, w: 4, h: 3, content: widgetSelector },
+                { x: 0, y: 3, w: 4, h: 1, content: widgetSlider },
+                //{ x: 8, y: 0, w: 8, h: 1, content: widgetTest },
+                { x: 8, y: 0, w: 4, h: 3, content: '<div id="plotLeverageReturns"></div>' },
+                { x: 12, y: 0, w: 4, h: 3, content: '<div id="plotUnderwaterDurations"></div>' },
+                { x: 12, y: 3, w: 4, h: 3, content: '<div id="plotUnderWater"></div>' },
+                { x: 16, y: 0, w: 4, h: 3, content: '<div id="plotDrawdownTimeProfile"></div>' },
+                { x: 16, y: 3, w: 4, h: 3, content: '<div id="plotDrawdownProfile"></div>' },
+                //{ x: 12, y: 18, w: 4, h: 3, content: '<div id="myplot6"></div>' },
+                { x: 4, y: 0, w: 4, h: 3, content: '<table id="output-table">' },
+                { x: 4, y: 3, w: 4, h: 3, content: '<table id="output-leverage-table" style="text-align: right;">' },
+                { x: 8, y: 3, w: 4, h: 3, class: 'sub-grid-class', content: '<div style="overflow:hidden;"></div>',
+                    subGridOpts: {
+                        cellHeight: '3vh',
+                        //column: 'auto', // size to match container. make sure to include gridstack-extra.min.css
+                        itemClass: 'sub', // style sub items differently and use to prevent dragging in/out
+                        acceptWidgets: '.grid-stack-item.sub', // only pink sub items can be inserted
+                        margin: 2,
+                        minRow: 12, // don't collapse when empty
+                        children: [
+                            { x: 0, y: 0, w: 1, h: 2, content: '<div id="gauge1"></div>' },
+                            { x: 1, y: 0, w: 1, h: 2, content: '<div id="gauge2"></div>' },
+                            { x: 2, y: 0, w: 1, h: 2, content: '<div id="gauge3"></div>' },
+                            { x: 0, y: 1, w: 1, h: 2, content: '<div id="gauge8"></div>' },
+                            { x: 1, y: 1, w: 1, h: 2, content: '<div id="gauge6"></div>' },
+                            { x: 2, y: 1, w: 1, h: 2, content: '<div id="gauge7"></div>' },
+                            { x: 0, y: 2, w: 1, h: 2, content: '<div id="gauge4"></div>' },
+                            { x: 1, y: 2, w: 1, h: 2, content: '<div id="gauge5"></div>' },
+                        ]
+                    }
+                },
+            ]
+            GridStack.renderCB = function (el, w) {
+                el.innerHTML = w.content + (w?.myHtml ?? '');
+            };
+            var simpleGrid = GridStack.init(
+                {
+                    column: 24,
+                    margin: 5,
+                    cellHeight: 'auto',
+                    acceptWidgets: true,
+                    //disableOneColumnMode: true,
+                    //cellHeight: 'auto',
+                    //column: 24,
+                    //animate: false, // show immediate (animate: true is nice for user dragging though)
+                    columnOpts: {
+                        breakpointForWindow: true,  // test window vs grid size
+                        breakpoints: [{ w: 700, c: 1 }, { w: 850, c: 3 }, { w: 950, c: 6 }, { w: 1100, c: 8 }, { w: 1600, c: 12 }, { w: 2500, c: 18 }, { w: 3600, c: 24 }, { w: 5000, c: 24 }]
+                    },
+                },
+                '#simple-grid'
+            )
+            simpleGrid.load(simple)
+
+
+
+            //+----------------------------------------------------+
+            //|                    Tab Script                      |
+            //+----------------------------------------------------+
+            // Tab functionality
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+                    document.getElementById(tab.getAttribute('data-tab')).classList.add('active');
+                });
+            });
+
+            // Set default tab
+            document.querySelector('.tab[data-tab="sample"]').classList.add('active');
+            document.getElementById('sample').classList.add('active');
+
+            // Slider and input synchronization
+            const slider = document.getElementById('slider');
+            const sliderValue = document.getElementById('slider-value');
+
+            slider.addEventListener('input', () => {
+                sliderValue.value = slider.value;
+
+                let kLeverage = slider.value / 100;
+                throttlePlots(kLeverage);
+            });
+
+            sliderValue.addEventListener('input', () => {
+                slider.value = sliderValue.value;
+
+            });
+            gauge1 = Gauge(
+                document.getElementById("gauge1"),
+                {
+                    min: 0,
+                    max: 400,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "𝜇0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 20) return "#5ee432";
+                        if (value < 40) return "#fffa50";
+                        if (value < 60) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge2 = Gauge(
+                document.getElementById("gauge2"),
+                {
+                    min: 0,
+                    max: 400,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "𝜎0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 20) return "#5ee432";
+                        if (value < 40) return "#fffa50";
+                        if (value < 60) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge3 = Gauge(
+                document.getElementById("gauge3"),
+                {
+                    min: 0,
+                    max: 400,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "s0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 20) return "#5ee432";
+                        if (value < 40) return "#fffa50";
+                        if (value < 60) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge4 = Gauge(
+                document.getElementById("gauge4"),
+                {
+                    min: 0,
+                    max: 400,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "R0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 20) return "#5ee432";
+                        if (value < 40) return "#fffa50";
+                        if (value < 60) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge5 = Gauge(
+                document.getElementById("gauge5"),
+                {
+                    min: 0,
+                    max: 400,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "𝜏0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 20) return "#5ee432";
+                        if (value < 40) return "#fffa50";
+                        if (value < 60) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge6 = Gauge(
+                document.getElementById("gauge6"),
+                {
+                    min: 0,
+                    max: 500,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "L: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 100) return "#5ee432";
+                        if (value < 150) return "#fffa50";
+                        if (value < 200) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge7 = Gauge(
+                document.getElementById("gauge7"),
+                {
+                    min: 0,
+                    max: 500,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "V: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 100) return "#5ee432";
+                        if (value < 150) return "#fffa50";
+                        if (value < 200) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            gauge8 = Gauge(
+                document.getElementById("gauge8"),
+                {
+                    min: 0,
+                    max: 200,
+                    dialStartAngle: 180,
+                    dialEndAngle: 0,
+                    value: 50,
+                    viewBox: "0 0 100 57",
+                    label: function (value) {
+                        return "k0: " + Math.round(value) + "%";
+                    },
+                    color: function (value) {
+                        if (value < 25) return "#5ee432";
+                        if (value < 50) return "#fffa50";
+                        if (value < 100) return "#f7aa38";
+                        return "#ef4655";
+                    }
+                }
+            );
+            runSample();
+        });
+    </script>
+</body>
+
+</html>

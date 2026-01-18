@@ -130,7 +130,7 @@
 
 .type-btn-h.long:hover,
 .type-btn-h.long.active {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(45, 212, 191, 0.15);
   border-color: var(--color-success);
   box-shadow: var(--shadow-glow-emerald);
 }
@@ -141,7 +141,7 @@
 
 .type-btn-h.short:hover,
 .type-btn-h.short.active {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(244, 63, 94, 0.15);
   border-color: var(--color-danger);
   box-shadow: var(--shadow-glow-rose);
 }
@@ -211,12 +211,12 @@
 
 .input-group-h input.input-danger:focus {
   border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
 }
 
 .input-group-h input.input-success:focus {
   border-color: var(--color-success);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
 }
 
 .date-input {

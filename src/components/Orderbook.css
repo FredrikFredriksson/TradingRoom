@@ -60,17 +60,17 @@
   font-size: 0.875rem;
 }
 
-/* D3 Chart Styling */
+/* D3 Chart Styling - metallic green/red to match theme */
 .orderbook-area {
-  opacity: 0.3;
+  opacity: 0.35;
 }
 
 .orderbook-bid-area {
-  fill: #1BC5BF;
+  fill: var(--color-success);
 }
 
 .orderbook-ask-area {
-  fill: #F64E62;
+  fill: var(--color-danger);
 }
 
 .orderbook-line {
@@ -79,11 +79,13 @@
 }
 
 .orderbook-bid-line {
-  stroke: #1BC5BF;
+  stroke: var(--color-success);
+  filter: drop-shadow(0 0 3px rgba(45, 212, 191, 0.5));
 }
 
 .orderbook-ask-line {
-  stroke: #F64E62;
+  stroke: var(--color-danger);
+  filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.5));
 }
 
 .orderbook-axis {

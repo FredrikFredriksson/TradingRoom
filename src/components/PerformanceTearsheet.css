@@ -1,0 +1,176 @@
+/* Performance Tearsheet – fits TradingJournal / app design system */
+
+.performance-tearsheet {
+  margin-top: 28px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.performance-tearsheet.empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 32px 24px;
+}
+
+.performance-tearsheet.empty p {
+  margin: 0;
+}
+
+.tearsheet-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tearsheet-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.tearsheet-left {
+  flex: 1;
+  min-width: 280px;
+}
+
+.tearsheet-right {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* KPI table */
+.kpi-table-wrap h5,
+.heatmap-wrap h5,
+.tearsheet-chart h5 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px 0;
+}
+
+.kpi-table-wrap {
+  margin-bottom: 24px;
+}
+
+.kpi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.kpi-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.kpi-table td:first-child {
+  color: var(--text-secondary);
+}
+
+.kpi-table td:last-child {
+  text-align: right;
+  font-weight: 500;
+}
+
+.kpi-table .mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Heatmap */
+.heatmap-wrap {
+  margin-bottom: 8px;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+}
+
+.heatmap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  min-width: 520px;
+}
+
+.heatmap-table th,
+.heatmap-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.heatmap-table thead th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.heatmap-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.heatmap-year {
+  text-align: left !important;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 44px;
+}
+
+.heatmap-cell {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  min-width: 52px;
+}
+
+.heatmap-ytd,
+.heatmap-itd {
+  font-weight: 600;
+}
+
+/* Charts */
+.tearsheet-chart {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  min-height: 260px;
+}
+
+.tearsheet-chart h5 {
+  margin-bottom: 8px;
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 900px) {
+  .tearsheet-grid {
+    flex-direction: column;
+  }
+
+  .tearsheet-left {
+    min-width: 100%;
+  }
+
+  .tearsheet-right {
+    min-width: 100%;
+  }
+}
