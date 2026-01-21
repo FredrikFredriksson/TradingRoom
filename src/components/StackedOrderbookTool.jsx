@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import './StackedOrderbookTool.css';
 
 /**
- * Stacked Orderbook Tool - Embeds the stacked-orderbook.tool.html (multi-exchange: Binance, Kraken, Coinbase)
+ * Stacked Orderbook Tool - Embeds the stacked-orderbook.tool.html (multi-exchange: Binance, Kraken, Coinbase, HyperLiquid)
  */
 const StackedOrderbookTool = () => {
   const containerRef = useRef(null);
@@ -16,7 +16,7 @@ const StackedOrderbookTool = () => {
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     iframe.style.background = 'transparent';
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    iframe.setAttribute('sandbox', 'allow-scripts');
 
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(iframe);

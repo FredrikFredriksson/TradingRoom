@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS trades (
   pnl_percent DECIMAL(10, 4),
   pnl_dollar DECIMAL(20, 2),
   r_result DECIMAL(10, 4),
+  fee DECIMAL(20, 4) DEFAULT 0,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

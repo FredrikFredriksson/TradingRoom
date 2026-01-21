@@ -1,20 +1,8 @@
 .trading-journal-enhanced {
-  background: var(--gradient-metallic);
   border-radius: var(--radius-lg);
   padding: 28px;
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-lg);
   position: relative;
-}
-
-.trading-journal-enhanced::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+  overflow: hidden;
 }
 
 /* Header */
@@ -39,10 +27,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(34, 211, 238, 0.1);
   padding: 8px 14px;
   border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
   border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.05);
 }
 
 .r-label {
@@ -61,10 +50,11 @@
   display: flex;
   gap: 4px;
   margin-bottom: 24px;
-  background: var(--bg-secondary);
   padding: 4px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .main-tab {
@@ -123,9 +113,11 @@
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-  background: var(--bg-secondary);
   padding: 6px;
   border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .view-tabs .tab {
@@ -159,9 +151,10 @@
 .empty-state-large {
   text-align: center;
   padding: 80px 40px;
-  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  border: 1px dashed var(--border-default);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px dashed rgba(34, 211, 238, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .empty-icon-large {
@@ -191,16 +184,17 @@
 }
 
 .active-trade-card {
-  background: var(--bg-secondary);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
   overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .active-trade-card:hover {
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
+  border-color: rgba(34, 211, 238, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(186, 230, 253, 0.06);
 }
 
 .active-trade-card.long {
@@ -216,7 +210,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: var(--bg-tertiary);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .trade-symbol-info {
@@ -264,8 +260,8 @@
 }
 
 .trade-risk {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--accent-amber);
+  background: rgba(34, 211, 238, 0.08);
+  color: var(--text-muted);
   padding: 6px 12px;
   border-radius: var(--radius-md);
   font-family: 'JetBrains Mono', monospace;
@@ -323,8 +319,10 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  background: var(--bg-primary);
   border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.14);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .info-label {
@@ -342,29 +340,33 @@
 }
 
 .info-value.warning {
-  color: var(--accent-amber);
+  color: var(--text-muted);
 }
 
 .trade-card-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   padding: 0 20px 20px;
 }
 
 .btn-close-trade {
-  width: 100%;
-  padding: 14px;
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  border-radius: var(--radius-md);
-  color: var(--color-danger);
-  font-size: 0.9rem;
-  font-weight: 600;
+  align-self: flex-end;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-close-trade:hover {
-  background: rgba(244, 63, 94, 0.15);
-  border-color: var(--color-danger);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: var(--color-danger);
+  background: rgba(244, 63, 94, 0.06);
 }
 
 .close-form {
@@ -461,10 +463,12 @@
 
 .trade-date-small {
   padding: 12px 20px;
-  background: var(--bg-tertiary);
   font-size: 0.75rem;
   color: var(--text-muted);
   text-align: center;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-top: 1px solid rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 /* Stats Section */
@@ -484,13 +488,14 @@
 .month-navigator .nav-btn {
   width: 40px;
   height: 40px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .month-navigator .nav-btn:hover {
@@ -530,14 +535,15 @@
 }
 
 .date-input-group input {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   padding: 10px 14px;
   color: var(--text-primary);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.9rem;
   color-scheme: dark;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .date-input-group input:focus {
@@ -565,13 +571,14 @@
 }
 
 .stat-card {
-  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .stat-card.large {
@@ -633,11 +640,12 @@
 
 /* Monthly Chart */
 .monthly-chart {
-  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .monthly-chart h4 {
@@ -662,14 +670,20 @@
   transition: all 0.2s ease;
   padding: 4px;
   border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .month-bar-container:hover {
-  background: var(--bg-tertiary);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-color: rgba(34, 211, 238, 0.14);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .month-bar-container.selected {
-  background: rgba(99, 102, 241, 0.1);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.05);
 }
 
 .bar-wrapper {
@@ -724,10 +738,11 @@
 }
 
 .chart-container {
-  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 20px;
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .chart-title {
@@ -755,10 +770,11 @@
 
 /* Trades Section */
 .trades-section {
-  background: var(--bg-secondary);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
 }
 
 .trades-header {
@@ -766,9 +782,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: var(--bg-tertiary);
   flex-wrap: wrap;
   gap: 12px;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .trades-header h4 {
@@ -842,20 +860,28 @@
 }
 
 /* Trades Table */
+.trades-table-container {
+  width: 100%;
+}
+
 .trades-table {
+  width: 100%;
   overflow-x: auto;
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 100px 90px 70px 100px 100px 130px 80px 60px;
+  grid-template-columns: minmax(100px, 1fr) minmax(90px, 1.2fr) minmax(70px, 0.8fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(130px, 1.5fr) minmax(80px, 1fr) minmax(70px, 0.9fr) 60px;
+  width: 100%;
   padding: 12px 20px;
-  background: var(--bg-primary);
   font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .table-header span {
@@ -869,7 +895,8 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 100px 90px 70px 100px 100px 130px 80px 60px;
+  grid-template-columns: minmax(100px, 1fr) minmax(90px, 1.2fr) minmax(70px, 0.8fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(130px, 1.5fr) minmax(80px, 1fr) minmax(70px, 0.9fr) 60px;
+  width: 100%;
   padding: 14px 20px;
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
@@ -992,6 +1019,12 @@
   color: var(--color-danger);
 }
 
+.cell-fee {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 .cell-actions {
   display: flex;
   gap: 8px;
@@ -1028,15 +1061,15 @@
 }
 
 .trade-modal {
-  background: var(--gradient-metallic);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.25s ease;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(186, 230, 253, 0.06);
 }
 
 .trade-modal-header {
@@ -1149,7 +1182,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 16px 24px;
-  background: var(--bg-secondary);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.02);
 }
 
 .modal-detail-item .detail-label {
@@ -1175,7 +1209,24 @@
 }
 
 .modal-detail-item .detail-value.risk {
-  color: var(--accent-amber);
+  color: var(--text-muted);
+}
+
+.modal-detail-item .detail-input.fee-input,
+.fee-input-inline {
+  width: 80px;
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+.modal-detail-item .detail-input.fee-input:focus,
+.fee-input-inline:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 .modal-dates {
@@ -1190,7 +1241,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 14px 24px;
-  background: var(--bg-secondary);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.02);
 }
 
 .date-label {
@@ -1209,9 +1261,10 @@
 .modal-comment {
   margin: 20px 24px;
   padding: 16px;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.15);
   border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #0c1524 0%, rgba(99, 102, 241, 0.06) 50%, #03060c 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .comment-label {
@@ -1299,7 +1352,7 @@
   
   .table-header,
   .table-row {
-    grid-template-columns: 80px 70px 60px 80px 80px 100px 70px 50px;
+    grid-template-columns: minmax(80px, 1fr) minmax(70px, 1.2fr) minmax(60px, 0.8fr) minmax(80px, 1fr) minmax(80px, 1fr) minmax(100px, 1.5fr) minmax(70px, 1fr) minmax(60px, 0.9fr) 50px;
     font-size: 0.75rem;
   }
   
@@ -1327,15 +1380,15 @@
 }
 
 .calendar-modal {
-  background: var(--gradient-metallic);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
   width: 100%;
   max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.25s ease;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(186, 230, 253, 0.06);
 }
 
 .calendar-header {
@@ -1360,8 +1413,6 @@
 .calendar-nav-btn {
   width: 40px;
   height: 40px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   cursor: pointer;
@@ -1369,6 +1420,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .calendar-nav-btn:hover {
@@ -1379,8 +1433,6 @@
 .calendar-close-btn {
   width: 40px;
   height: 40px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
@@ -1388,6 +1440,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .calendar-close-btn:hover {
@@ -1405,7 +1460,6 @@
 }
 
 .calendar-day-header {
-  background: var(--bg-tertiary);
   padding: 12px;
   text-align: center;
   font-size: 0.75rem;
@@ -1413,10 +1467,12 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.1);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.03);
 }
 
 .calendar-day {
-  background: var(--bg-secondary);
   min-height: 100px;
   padding: 8px;
   display: flex;
@@ -1425,6 +1481,9 @@
   position: relative;
   transition: all 0.2s ease;
   cursor: pointer;
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.02);
 }
 
 .calendar-day:hover {
@@ -1433,8 +1492,9 @@
 }
 
 .calendar-day.other-month {
-  opacity: 0.3;
-  background: var(--bg-primary);
+  opacity: 0.4;
+  background: linear-gradient(145deg, #050a12 0%, #080e1a 50%, #03060c 100%);
+  box-shadow: none;
 }
 
 .calendar-day.today {

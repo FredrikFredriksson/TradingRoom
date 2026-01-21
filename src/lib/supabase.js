@@ -61,6 +61,7 @@ export const tradesApi = {
       risk_multiple: trade.riskMultiple,
       open_date: trade.openDate,
       status: trade.status || 'open',
+      fee: trade.fee != null ? trade.fee : 0,
     };
     
     console.log('💾 Creating trade in Supabase:', tradeData);
@@ -191,6 +192,7 @@ export function dbToAppTrade(dbTrade) {
     pnlPercent: dbTrade.pnl_percent ? parseFloat(dbTrade.pnl_percent) : null,
     pnlDollar: dbTrade.pnl_dollar ? parseFloat(dbTrade.pnl_dollar) : null,
     rResult: dbTrade.r_result ? parseFloat(dbTrade.r_result) : null,
+    fee: dbTrade.fee != null ? parseFloat(dbTrade.fee) : 0,
     comment: dbTrade.notes || '',
   };
   

@@ -43,14 +43,13 @@ import {
 import PerformanceTearsheet from './PerformanceTearsheet';
 import './TradingJournal.css';
 
-const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBalance = 1000 }) => {
+const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateTrade, initialBalance = 1000 }) => {
   // Main tab: 'active', 'stats', 'trades'
   const [mainTab, setMainTab] = useState('stats');
   
-  // View mode for trades/stats: 'month', 'range', 'all'
-  const [viewMode, setViewMode] = useState('month');
-  // Default to January 2025 for test data
-  const [selectedMonth, setSelectedMonth] = useState(new Date(2025, 0, 1));
+  // View mode for trades/stats: 'month', 'range', 'all' — default 'all' so Trade History shows all closed trades
+  const [viewMode, setViewMode] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState(() => startOfMonth(new Date()));
   const [dateRange, setDateRange] = useState({
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -64,6 +63,16 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
   const [closePrice, setClosePrice] = useState('');
   const [closeComment, setCloseComment] = useState('');
   
+  // Editable fee in trade detail modal
+  const [feeInput, setFeeInput] = useState('');
+  useEffect(() => {
+    if (selectedTrade) setFeeInput(String(selectedTrade.fee ?? 0));
+  }, [selectedTrade?.id, selectedTrade?.fee]);
+  
+  // Editable fee on active trade cards
+  const [editingFeeId, setEditingFeeId] = useState(null);
+  const [editingFeeValue, setEditingFeeValue] = useState('');
+  
   // Calendar view state
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -72,34 +81,27 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
   const openTrades = trades.filter(t => t.status === 'open');
   const closedTrades = trades.filter(t => t.status === 'closed');
   
-  // Update selectedMonth when trades load to match the year of trades
+  // When closed trades load, set selectedMonth to the month of the most recent trade
+  // so "Monthly" view shows a month that has data
   useEffect(() => {
     if (closedTrades.length > 0) {
-      const tradesWithDates = closedTrades
+      const withDate = closedTrades
         .filter(t => t.closeDate)
         .map(t => {
           try {
-            return parseISO(t.closeDate);
+            const d = parseISO(t.closeDate);
+            return isNaN(d.getTime()) ? null : d;
           } catch {
             return null;
           }
         })
-        .filter(d => d && !isNaN(d.getTime()));
-      
-      if (tradesWithDates.length > 0) {
-        const years = tradesWithDates.map(d => d.getFullYear());
-        const mostCommonYear = years.sort((a, b) => 
-          years.filter(y => y === a).length - years.filter(y => y === b).length
-        ).pop();
-        
-        // Only update if current month is not in the year range
-        const currentYear = selectedMonth.getFullYear();
-        if (currentYear !== mostCommonYear && mostCommonYear) {
-          setSelectedMonth(new Date(mostCommonYear, 0, 1));
-        }
+        .filter(Boolean);
+      if (withDate.length > 0) {
+        const latest = withDate.reduce((a, b) => (a > b ? a : b));
+        setSelectedMonth(startOfMonth(latest));
       }
     }
-  }, [closedTrades.length]); // Only run when trades count changes
+  }, [closedTrades.length]);
 
   // Filter trades based on view mode
   const filteredTrades = useMemo(() => {
@@ -398,7 +400,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
   };
 
   return (
-    <div className="trading-journal-enhanced">
+    <div className="trading-journal-enhanced glass-card">
       {/* Header */}
       <div className="journal-header">
         <h2>
@@ -494,6 +496,30 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                           <span className="info-label">Risk</span>
                           <span className="info-value warning">${trade.riskAmount.toFixed(2)}</span>
                         </div>
+                        {onUpdateTrade && (
+                          <div className="info-item">
+                            <span className="info-label">Fee ($)</span>
+                            <input
+                              type="number"
+                              className="fee-input-inline"
+                              value={editingFeeId === trade.id ? editingFeeValue : (trade.fee ?? 0)}
+                              onFocus={() => {
+                                setEditingFeeId(trade.id);
+                                setEditingFeeValue(String(trade.fee ?? 0));
+                              }}
+                              onChange={(e) => setEditingFeeValue(e.target.value)}
+                              onBlur={() => {
+                                const v = parseFloat(editingFeeValue) || 0;
+                                onUpdateTrade(trade.id, { fee: v });
+                                setEditingFeeId(null);
+                              }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                              placeholder="0"
+                              step="0.01"
+                              min="0"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -530,7 +556,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                         </div>
                       ) : (
                         <button className="btn-close-trade" onClick={() => handleCloseClick(trade)}>
-                          Close Trade
+                          Close
                         </button>
                       )}
                     </div>
@@ -991,6 +1017,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                   <span>Exit</span>
                   <span>P&L</span>
                   <span>R</span>
+                  <span>Fee</span>
                   <span></span>
                 </div>
                 
@@ -1029,6 +1056,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
                     </span>
                     <span className={`cell-r ${(trade.rResult || 0) >= 0 ? 'positive' : 'negative'}`}>
                       {formatR(trade.rResult || 0)}
+                    </span>
+                    <span className="cell-fee">
+                      ${(trade.fee ?? 0).toFixed(2)}
                     </span>
                     <span className="cell-actions">
                       {onDeleteTrade && (
@@ -1115,6 +1145,32 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, initialBa
               <div className="modal-detail-item">
                 <span className="detail-label">Risk Multiple</span>
                 <span className="detail-value">{selectedTrade.riskMultiple}R</span>
+              </div>
+              <div className="modal-detail-item">
+                <span className="detail-label">Fee ($)</span>
+                {onUpdateTrade ? (
+                  <input
+                    type="number"
+                    className="detail-input fee-input"
+                    value={feeInput}
+                    onChange={(e) => setFeeInput(e.target.value)}
+                    onBlur={() => {
+                      const v = parseFloat(feeInput) || 0;
+                      onUpdateTrade(selectedTrade.id, { fee: v });
+                      setSelectedTrade(prev => prev ? { ...prev, fee: v } : null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.target.blur();
+                      }
+                    }}
+                    placeholder="0"
+                    step="0.01"
+                    min="0"
+                  />
+                ) : (
+                  <span className="detail-value">${(selectedTrade.fee ?? 0).toFixed(2)}</span>
+                )}
               </div>
             </div>
 

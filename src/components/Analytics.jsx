@@ -175,7 +175,7 @@ const Analytics = () => {
         >
           <div className="grid-stack-item-content widget-wrapper">
             <div className="widget-header">
-              <span>Stacked Orderbook (Binance, Kraken, Coinbase)</span>
+              <span>Stacked Orderbook (Binance, Kraken, Coinbase, HyperLiquid)</span>
             </div>
             <StackedOrderbookTool />
           </div>

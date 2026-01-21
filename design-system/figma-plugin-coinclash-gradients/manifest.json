@@ -1,0 +1,7 @@
+{
+  "name": "CoinClash Gradients",
+  "id": "coinclash-gradients",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}

@@ -3,144 +3,278 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Stacked Realtime Order Book Visualization with Individual Bid/Ask Lines</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Stacked Order Book — Binance, Kraken, Coinbase, HyperLiquid</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* Design system: dark blue theme (matches TradingRoom) */
-        html, body { height: 100%; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #050a12;
+            --bg-secondary: #080e1a;
+            --bg-elevated: #0f1a2e;
+            --bg-hover: #131f35;
+            --accent-primary: #22d3ee;
+            --accent-blue: #38bdf8;
+            --accent-emerald: #2dd4bf;
+            --accent-emerald-bright: #5eead4;
+            --color-danger: #f43f5e;
+            --color-danger-bright: #fb7185;
+            --text-primary: #f0f9ff;
+            --text-secondary: #bae6fd;
+            --text-muted: #94a3b8;
+            --border-subtle: rgba(34, 211, 238, 0.08);
+            --border-default: rgba(34, 211, 238, 0.12);
+            --radius-sm: 1px;
+            --radius-md: 2px;
+            --radius-lg: 3px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body { height: 100%; margin: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f1a2e;
-            color: #f0f9ff;
-            display: flex;
-            flex-direction: column;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        #controls {
-            flex-shrink: 0;
-            margin: 8px 12px;
+        .orderbook-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
-        #controls label {
-            color: #f0f9ff;
+        #range-select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
+            color: var(--text-primary);
             font-size: 0.875rem;
             font-weight: 500;
             font-family: 'JetBrains Mono', monospace;
-        }
-
-        #symbol {
-            background: #0c1524;
-            color: #f0f9ff;
-            border: 1px solid rgba(34, 211, 238, 0.12);
-            border-radius: 2px;
-            padding: 6px 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        #symbol:hover, #symbol:focus {
-            border-color: rgba(34, 211, 238, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
             outline: none;
         }
 
-        #symbol option {
-            background: #0c1524;
-            color: #f0f9ff;
+        #range-select:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
         }
 
-        #status {
-            color: #94a3b8;
-            font-size: 0.75rem;
+        #range-select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+        }
+
+        #range-select option {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        #symbol-select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
             font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            min-width: 140px;
+        }
+
+        #symbol-select:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        #symbol-select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+        }
+
+        #symbol-select option {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
         }
 
         #chart {
-            flex: 1;
-            min-height: 180px;
-            margin: 0 12px 12px;
-            overflow: hidden;
-        }
-
-        #chart svg {
+            margin: 0;
+            padding: 24px;
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 60px);
+            min-height: 400px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #chart svg {
             display: block;
+            width: 100%;
+            max-width: 100%;
         }
 
-        /* D3 axis – match Orderbook tool: JetBrains Mono, 11px, accent colors */
+        /* D3 Chart — same as Orderbook tool */
+        .line {
+            fill: none;
+            stroke-width: 3px;
+            transition: stroke-width 0.2s ease;
+        }
+
+        .bid-line {
+            stroke: var(--accent-emerald);
+        }
+
+        .ask-line {
+            stroke: var(--color-danger);
+        }
+
+        .area {
+            transition: opacity 0.3s ease;
+        }
+
+        .bid-area {
+            opacity: 0.42;
+        }
+
+        .ask-area {
+            opacity: 0.42;
+        }
+
+        .orderbook-axis {
+            color: var(--text-muted);
+        }
+
         .orderbook-axis text {
-            fill: #bae6fd;
+            fill: var(--text-secondary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
             font-weight: 600;
             text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         }
-        .orderbook-axis.x-axis text { fill: #22d3ee; opacity: 0.8; }
-        .orderbook-axis.y-axis text { fill: #38bdf8; opacity: 0.9; }
-        .orderbook-axis path, .orderbook-axis line { stroke: rgba(34, 211, 238, 0.08); stroke-width: 1; }
-        .orderbook-axis .domain { stroke: #22d3ee; stroke-width: 2; opacity: 0.4; }
-        .orderbook-axis .tick line { opacity: 0.15; }
-        .orderbook-axis.x-axis .tick line { stroke: #22d3ee; }
-        .orderbook-axis.y-axis .tick line { stroke: #38bdf8; }
 
-        .line { fill: none; stroke-width: 1.5px; }
-        .area { stroke: none; opacity: 0.28; }
+        .orderbook-axis.x-axis text {
+            fill: var(--accent-primary);
+            opacity: 0.8;
+            font-size: min(14px, max(9px, calc(var(--chart-width, 600) / 55)));
+        }
 
-        .legend rect { stroke: rgba(34, 211, 238, 0.2); stroke-width: 1px; }
-        .legend text {
-            fill: #bae6fd;
+        .orderbook-axis.y-axis text {
+            fill: var(--accent-blue);
+            opacity: 0.9;
+            font-size: min(14px, max(9px, calc(var(--chart-height, 400) / 40)));
+        }
+
+        .orderbook-axis path,
+        .orderbook-axis line {
+            stroke: var(--border-subtle);
+            stroke-width: 1;
+        }
+
+        .orderbook-axis .domain {
+            stroke: var(--accent-primary);
+            stroke-width: 2;
+            opacity: 0.4;
+        }
+
+        .orderbook-axis .tick line {
+            stroke: var(--accent-primary);
+            opacity: 0.2;
+        }
+
+        .orderbook-axis.x-axis .tick line {
+            stroke: var(--accent-primary);
+            opacity: 0.15;
+        }
+
+        .orderbook-axis.y-axis .tick line {
+            stroke: var(--accent-blue);
+            opacity: 0.15;
+        }
+
+        .mid-price-line {
+            pointer-events: none;
+        }
+
+        .grid-lines .grid-line {
+            pointer-events: none;
+        }
+
+        .legend {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
+            fill: var(--text-secondary);
         }
     </style>
 </head>
 
 <body>
-    <!-- Controls -->
-    <div id="controls">
-        <label for="symbol">Symbol:</label>
-        <select id="symbol">
+    <div class="orderbook-controls">
+        <select id="symbol-select" aria-label="Trading pair">
             <option value="BTC/USDT">BTC/USDT</option>
-            <option value="ETH/USDT">ETH/USDT</option>
-            <option value="SOL/USDT">SOL/USDT</option>
         </select>
-        <span id="status">Live: Binance, Kraken, Coinbase</span>
+        <select id="range-select" value="0.01">
+            <option value="0.002">20 bps</option>
+            <option value="0.004">40 bps</option>
+            <option value="0.006">60 bps</option>
+            <option value="0.008">80 bps</option>
+            <option value="0.01" selected>100 bps (1%)</option>
+            <option value="0.02">200 bps (2%)</option>
+            <option value="0.03">300 bps (3%)</option>
+            <option value="0.05">5%</option>
+            <option value="0.1">10%</option>
+        </select>
     </div>
-    <!-- Container for the chart -->
-    <div id="chart" class="svg-container"></div>
+
+    <div id="chart"><p id="chart-placeholder" style="color:#94a3b8;padding:40px;text-align:center;font-family:JetBrains Mono">Chart loading…</p></div>
 
     <script>
-        // --- Multi-Exchange Orderbook (Binance, Kraken, Coinbase — free, no API keys) ---
+        // --- Multi-Exchange (Binance, Kraken, Coinbase) — same style as orderbook.tool, stacked ---
         (function () {
-            var LEVELS = 50;
-            function toChartFormat(bids, asks, levels) {
-                levels = levels || LEVELS;
-                function row(p, v) { var a = parseFloat(p), b = parseFloat(v); return isFinite(a) && isFinite(b) && b > 0 ? { price: a, volume: b } : null; }
-                var b = (bids || []).map(function (x) { return row(x[0], x[1]); }).filter(Boolean).sort(function (a, b) { return b.price - a.price; }).slice(0, levels);
-                var a = (asks || []).map(function (x) { return row(x[0], x[1]); }).filter(Boolean).sort(function (a, b) { return a.price - b.price; }).slice(0, levels);
-                if (b.length === 0 && a.length === 0) return { bids: [], asks: [] };
-                var firstBid = b.length ? 1.000001 * b[0].price : 0, firstAsk = a.length ? 0.999999 * a[0].price : 0;
-                b.splice(0, 0, { price: firstBid, volume: 0 }); a.splice(0, 0, { price: firstAsk, volume: 0 });
-                var cum = 0; b.forEach(function (d) { cum += d.volume; d.cumVolume = cum; }); cum = 0; a.forEach(function (d) { cum += d.volume; d.cumVolume = cum; });
+            // toChartFormat: [price,qty] -> { price, volume: price*qty, cumVolume } — matches orderbook.tool (notional)
+            function toChartFormat(bids, asks) {
+                function row(p, q) {
+                    var a = parseFloat(p), b = parseFloat(q);
+                    return isFinite(a) && isFinite(b) && b > 0 ? { price: a, volume: a * b } : null;
+                }
+                var b = (bids || []).map(function (x) { return row(x[0], x[1]); }).filter(Boolean).sort(function (a, b) { return b.price - a.price; });
+                var a = (asks || []).map(function (x) { return row(x[0], x[1]); }).filter(Boolean).sort(function (a, b) { return a.price - b.price; });
+                var cum = 0;
+                b.forEach(function (d) { cum += d.volume; d.cumVolume = cum; });
+                cum = 0;
+                a.forEach(function (d) { cum += d.volume; d.cumVolume = cum; });
                 return { bids: b, asks: a };
             }
+
             function startBinance(displaySymbol, onBook) {
-                var symbol = displaySymbol.replace('/', '').toUpperCase(), ws = null, orderbook = { bids: [], asks: [] }, lastUpdateId = 0, snapshotDone = false, closed = false, CAP = 120;
+                var symbol = displaySymbol.replace('/', '').toUpperCase(), ws = null, orderbook = { bids: [], asks: [] }, lastUpdateId = 0, snapshotDone = false, closed = false, CAP = 500;
                 function emit() { var r = toChartFormat(orderbook.bids, orderbook.asks); if (r.bids.length || r.asks.length) onBook('Binance', r); }
                 function run() {
                     if (closed) return;
                     snapshotDone = false;
-                    fetch('https://api.binance.com/api/v3/depth?symbol=' + symbol + '&limit=100').then(function (r) { return r.json(); }).then(function (data) {
+                    fetch('https://api.binance.com/api/v3/depth?symbol=' + symbol + '&limit=500').then(function (r) { return r.json(); }).then(function (data) {
                         if (closed) return;
+                        if (!data || data.code != null || !Array.isArray(data.bids) || !Array.isArray(data.asks)) { snapshotDone = true; return; }
                         orderbook = { bids: (data.bids || []).map(function (x) { var a = parseFloat(x[0]), b = parseFloat(x[1]); return isFinite(a) && isFinite(b) ? [a, b] : null; }).filter(Boolean).sort(function (a, b) { return b[0] - a[0]; }), asks: (data.asks || []).map(function (x) { var a = parseFloat(x[0]), b = parseFloat(x[1]); return isFinite(a) && isFinite(b) ? [a, b] : null; }).filter(Boolean).sort(function (a, b) { return a[0] - b[0]; }) };
                         lastUpdateId = data.lastUpdateId || 0; snapshotDone = true; emit();
                     }).catch(function () { snapshotDone = true; });
@@ -163,6 +297,7 @@
                 run();
                 return function () { closed = true; try { if (ws) ws.close(); } catch (_) {} };
             }
+
             function startKraken(displaySymbol, onBook) {
                 var symbol = displaySymbol, ws = null, orderbook = { bids: [], asks: [] }, DEPTH = 100, closed = false;
                 function safe(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
@@ -189,6 +324,7 @@
                 connect();
                 return function () { closed = true; try { if (ws) ws.close(); } catch (_) {} };
             }
+
             function startCoinbase(displaySymbol, onBook) {
                 var productId = displaySymbol.replace('/USDT', '-USD').replace('/', '-'), ws = null, orderbook = { bids: [], asks: [] }, DEPTH = 100, closed = false;
                 function apply(side, priceLevel, newQty) { var isBid = side === 'bid', isAsk = side === 'ask' || side === 'offer'; if (!isBid && !isAsk) return; var p = parseFloat(priceLevel), q = parseFloat(newQty); if (!isFinite(p) || !isFinite(q)) return; var arr = isBid ? orderbook.bids : orderbook.asks, i = arr.findIndex(function (x) { return Math.abs(x[0] - p) < 1e-9; }); if (q === 0) { if (i >= 0) arr.splice(i, 1); } else { if (i >= 0) arr[i][1] = q; else arr.push([p, q]); } if (isBid) { orderbook.bids.sort(function (a, b) { return b[0] - a[0]; }); orderbook.bids.splice(DEPTH); } else { orderbook.asks.sort(function (a, b) { return a[0] - b[0]; }); orderbook.asks.splice(DEPTH); } }
@@ -212,187 +348,397 @@
                 connect();
                 return function () { closed = true; try { if (ws) ws.close(); } catch (_) {} };
             }
+
+            function startHyperLiquid(displaySymbol, onBook) {
+                var coin = (displaySymbol || 'BTC/USDT').split('/')[0] || 'BTC';
+                var ws = null, orderbook = { bids: [], asks: [] }, CAP = 500, closed = false;
+                function toHL(levels) {
+                    return (levels || []).map(function (l) { var p = parseFloat(l && l.px), q = parseFloat(l && l.sz); return (isFinite(p) && isFinite(q)) ? [p, q] : null; }).filter(Boolean);
+                }
+                function emit() { var r = toChartFormat(orderbook.bids, orderbook.asks); if (r.bids.length || r.asks.length) onBook('HyperLiquid', r); }
+                // REST l2Book: levels[0]=bids, levels[1]=asks. nSigFigs/nLevels align with WebSocket.
+                fetch('https://api.hyperliquid.xyz/info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'l2Book', coin: coin, nSigFigs: 5, nLevels: 100 }) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (closed) return;
+                        if (d && Array.isArray(d.levels)) {
+                            var b = toHL(d.levels[0]).sort(function (a, b) { return b[0] - a[0]; }).slice(0, CAP);
+                            var a = toHL(d.levels[1]).sort(function (a, b) { return a[0] - b[0]; }).slice(0, CAP);
+                            if (b.length) orderbook.bids = b;
+                            if (a.length) orderbook.asks = a;
+                            emit();
+                        }
+                    })
+                    .catch(function () {});
+                function connect() {
+                    if (closed) return;
+                    ws = new WebSocket('wss://api.hyperliquid.xyz/ws');
+                    ws.onopen = function () { if (closed) return; ws.send(JSON.stringify({ method: 'subscribe', subscription: { type: 'l2Book', coin: coin, nLevels: 100, nSigFigs: 5 } })); };
+                    ws.onmessage = function (ev) {
+                        if (closed) return;
+                        try {
+                            var j = JSON.parse(ev.data);
+                            if (j.channel !== 'l2Book' || !j.data || !Array.isArray(j.data.levels)) return;
+                            var lev = j.data.levels;
+                            // levels[0]=bids, levels[1]=asks. Only overwrite when we have data (avoid wiping with empty).
+                            if (lev[0] && lev[0].length) orderbook.bids = toHL(lev[0]).sort(function (a, b) { return b[0] - a[0]; }).slice(0, CAP);
+                            if (lev[1] && lev[1].length) orderbook.asks = toHL(lev[1]).sort(function (a, b) { return a[0] - b[0]; }).slice(0, CAP);
+                            emit();
+                        } catch (e) {}
+                    };
+                    ws.onerror = function () {};
+                    ws.onclose = function () { ws = null; if (closed) return; setTimeout(connect, 2000); };
+                }
+                connect();
+                return function () { closed = true; try { if (ws) ws.close(); } catch (_) {} };
+            }
+
             function startMultiExchangeOrderbook(displaySymbol, onData) {
-                var state = { Binance: null, Kraken: null, Coinbase: null }, unsub = [];
-                function put(exchange, book) { state[exchange] = book; var list = []; if (state.Binance && (state.Binance.bids.length || state.Binance.asks.length)) list.push({ exchange: 'Binance', bids: state.Binance.bids, asks: state.Binance.asks }); if (state.Kraken && (state.Kraken.bids.length || state.Kraken.asks.length)) list.push({ exchange: 'Kraken', bids: state.Kraken.bids, asks: state.Kraken.asks }); if (state.Coinbase && (state.Coinbase.bids.length || state.Coinbase.asks.length)) list.push({ exchange: 'Coinbase', bids: state.Coinbase.bids, asks: state.Coinbase.asks }); onData(list); }
+                var state = { Binance: null, Kraken: null, Coinbase: null, HyperLiquid: null }, unsub = [];
+                function put(exchange, book) { state[exchange] = book; var list = []; if (state.Binance && (state.Binance.bids.length || state.Binance.asks.length)) list.push({ exchange: 'Binance', bids: state.Binance.bids, asks: state.Binance.asks }); if (state.Kraken && (state.Kraken.bids.length || state.Kraken.asks.length)) list.push({ exchange: 'Kraken', bids: state.Kraken.bids, asks: state.Kraken.asks }); if (state.Coinbase && (state.Coinbase.bids.length || state.Coinbase.asks.length)) list.push({ exchange: 'Coinbase', bids: state.Coinbase.bids, asks: state.Coinbase.asks }); if (state.HyperLiquid && (state.HyperLiquid.bids.length || state.HyperLiquid.asks.length)) list.push({ exchange: 'HyperLiquid', bids: state.HyperLiquid.bids, asks: state.HyperLiquid.asks }); onData(list); }
                 unsub.push(startBinance(displaySymbol, function (ex, b) { put(ex, b); }));
                 unsub.push(startKraken(displaySymbol, function (ex, b) { put(ex, b); }));
                 unsub.push(startCoinbase(displaySymbol, function (ex, b) { put(ex, b); }));
+                unsub.push(startHyperLiquid(displaySymbol, function (ex, b) { put(ex, b); }));
                 return function () { unsub.forEach(function (f) { f(); }); };
             }
             window.startMultiExchangeOrderbook = startMultiExchangeOrderbook;
         })();
 
-        // Compact chart size – scales with container (SVG 100% x 100%)
-        const margin = { top: 10, right: 92, bottom: 18, left: 42 },
-            width = 520 - margin.left - margin.right,
-            height = 260 - margin.top - margin.bottom,
-            vbW = width + margin.left + margin.right,
-            vbH = height + margin.top + margin.bottom;
+        // --- Chart: same structure as orderbook.tool, stacked layers ---
+        function initChart() {
+        var chartContainer = document.getElementById('chart');
+        if (!chartContainer) return;
+        chartContainer.innerHTML = '';
+        try {
+        const margin = { top: 30, right: 100, bottom: 40, left: 85 };
+        var cw = Math.max(chartContainer.clientWidth || 0, 600);
+        var ch = Math.max(chartContainer.clientHeight || 0, 450);
+        let chartWidth = Math.max(cw - margin.left - margin.right, 400);
+        let chartHeight = Math.max(ch - margin.top - margin.bottom, 300);
 
+        var vbW = chartWidth + margin.left + margin.right;
+        var vbH = chartHeight + margin.top + margin.bottom;
         const svg = d3.select('#chart')
             .append('svg')
-            .attr('viewBox', `0 0 ${vbW} ${vbH}`)
-            .attr('preserveAspectRatio', 'xMinYMin meet')
             .attr('width', '100%')
-            .attr('height', '100%')
-            .classed('svg-content-responsive', true)
-            .append('g')
-            .attr('transform', `translate(${margin.left},${margin.top})`);
+            .attr('height', vbH)
+            .attr('viewBox', '0 0 ' + vbW + ' ' + vbH)
+            .attr('preserveAspectRatio', 'none');
 
-        // Initialize scales
-        const x = d3.scaleLinear().range([0, width]);
-        const y = d3.scaleLinear().range([height, 0]);
+        const defs = svg.append('defs');
+        var bidGradient = defs.append('linearGradient').attr('id', 'bidGradient').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+        bidGradient.append('stop').attr('offset', '0%').attr('stop-color', '#5eead4').attr('stop-opacity', 0.55);
+        bidGradient.append('stop').attr('offset', '50%').attr('stop-color', '#2dd4bf').attr('stop-opacity', 0.35);
+        bidGradient.append('stop').attr('offset', '100%').attr('stop-color', '#14b8a6').attr('stop-opacity', 0.15);
+        var askGradient = defs.append('linearGradient').attr('id', 'askGradient').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+        askGradient.append('stop').attr('offset', '0%').attr('stop-color', '#fb7185').attr('stop-opacity', 0.55);
+        askGradient.append('stop').attr('offset', '50%').attr('stop-color', '#f43f5e').attr('stop-opacity', 0.35);
+        askGradient.append('stop').attr('offset', '100%').attr('stop-color', '#e11d48').attr('stop-opacity', 0.15);
 
-        // Initialize axes (classes match Orderbook tool styling)
-        const xAxis = svg.append('g')
-            .attr('transform', `translate(0,${height})`)
-            .attr('class', 'orderbook-axis x-axis');
-        const yAxis = svg.append('g')
-            .attr('class', 'orderbook-axis y-axis');
+        const chartGroup = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+        chartContainer.style.setProperty('--chart-width', String(chartWidth));
+        chartContainer.style.setProperty('--chart-height', String(chartHeight));
 
-        // Design system: cyan / blue / teal (Binance, Kraken, Coinbase)
-        const color = d3.scaleOrdinal(['#22d3ee', '#38bdf8', '#2dd4bf']);
+        const x = d3.scaleLinear().range([0, chartWidth]);
+        const y = d3.scaleLinear().range([chartHeight, 0]);
 
-        // Function to update the chart
-        function update(data) {
-            function fin(x) { return isFinite(x); }
-            const bidPrices = Array.from(new Set(data.flatMap(function (d) { return (d.bids || []).map(function (p) { return p && p.price; }).filter(fin); }))).sort(function (a, b) { return b - a; });
-            const askPrices = Array.from(new Set(data.flatMap(function (d) { return (d.asks || []).map(function (p) { return p && p.price; }).filter(fin); }))).sort(function (a, b) { return a - b; });
+        const xAxis = chartGroup.append('g').attr('transform', 'translate(0,' + chartHeight + ')').attr('class', 'orderbook-axis x-axis');
+        const yAxis = chartGroup.append('g').attr('class', 'orderbook-axis y-axis');
 
-            // Build a price level map for bids and asks
-            const bidPriceLevels = bidPrices.map(price => ({ price }));
-            const askPriceLevels = askPrices.map(price => ({ price }));
+        var gapGroup = chartGroup.insert('g', '.orderbook-axis').attr('class', 'gap-group');
+        var bidAreaGroup = chartGroup.append('g').attr('class', 'bid-areas');
+        var bidLineGroup = chartGroup.append('g').attr('class', 'bid-lines');
+        var askAreaGroup = chartGroup.append('g').attr('class', 'ask-areas');
+        var askLineGroup = chartGroup.append('g').attr('class', 'ask-lines');
 
-            // For each exchange, map cumulative volumes to the price levels (tolerance for float match)
+        var gridGroup = chartGroup.append('g').attr('class', 'grid-lines');
+        var legendGroup = chartGroup.append('g').attr('class', 'legend-group').attr('transform', 'translate(' + (chartWidth + 8) + ', 0)');
+
+        // Design system: orderbook green, danger red, accent blue, HyperLiquid violet
+        var EXCHANGE_COLORS = { Binance: '#2dd4bf', Kraken: '#f43f5e', Coinbase: '#38bdf8', HyperLiquid: '#a78bfa' };
+
+        // Step curve — same as orderbook.tool
+        function stepCurve(shape) { return shape.curve(d3.curveStepAfter); }
+
+        var TRANSITION_MS = 520;
+        var smoothedYMax = null;
+
+        function resampleLevels(levels, n, priceLo, priceHi, keys) {
+            if (levels.length === 0 || n < 2) return levels;
+            var prices = levels.map(function (l) { return l.price; });
+            var out = [];
+            for (var i = 0; i < n; i++) {
+                var p = priceLo + (priceHi - priceLo) * i / (n - 1);
+                var idx = d3.bisectLeft(prices, p);
+                var i0 = Math.max(0, idx - 1), i1 = Math.min(levels.length - 1, idx);
+                var lo = levels[i0], hi = levels[i1];
+                var t = (lo.price === hi.price) ? 1 : (p - lo.price) / (hi.price - lo.price);
+                var lev = { price: p };
+                keys.forEach(function (k) { lev[k] = (lo[k] != null ? lo[k] : 0) + t * ((hi[k] != null ? hi[k] : 0) - (lo[k] != null ? lo[k] : 0)); });
+                out.push(lev);
+            }
+            return out;
+        }
+
+        function update(data, opts) {
+            chartGroup.selectAll('.loading-text').remove();
+            if (!data || data.length === 0) return;
+            var useTransition = !opts || opts.transition !== false;
+
+            var newW = Math.max((chartContainer.clientWidth || window.innerWidth - 40) - margin.left - margin.right, 600);
+            var newH = Math.max((chartContainer.clientHeight || 500) - margin.top - margin.bottom, 400);
+            if (newW !== chartWidth || newH !== chartHeight) {
+                chartWidth = newW; chartHeight = newH;
+                x.range([0, chartWidth]); y.range([chartHeight, 0]);
+                xAxis.attr('transform', 'translate(0,' + chartHeight + ')');
+                svg.attr('viewBox', '0 0 ' + (chartWidth + margin.left + margin.right) + ' ' + (chartHeight + margin.top + margin.bottom));
+            }
+            chartContainer.style.setProperty('--chart-width', String(chartWidth));
+            chartContainer.style.setProperty('--chart-height', String(chartHeight));
+
+            function fin(v) { return isFinite(v); }
+            var allBidPrices = [];
+            var allAskPrices = [];
+            data.forEach(function (d) {
+                (d.bids || []).forEach(function (p) { if (p && fin(p.price)) allBidPrices.push(p.price); });
+                (d.asks || []).forEach(function (p) { if (p && fin(p.price)) allAskPrices.push(p.price); });
+            });
+            allBidPrices = Array.from(new Set(allBidPrices));
+            allAskPrices = Array.from(new Set(allAskPrices));
+            if (allBidPrices.length === 0 || allAskPrices.length === 0) return;
+
+            var bestBid = d3.max(allBidPrices), bestAsk = d3.min(allAskPrices);
+            var midPrice = 0.5 * (bestBid + bestAsk);
+            var bpsWidth = Number(window.stackedOrderbookRange) || 0.01;
+            var minPrice = (1 - bpsWidth) * midPrice;
+            var maxPrice = (1 + bpsWidth) * midPrice;
+
+            // Bids stop at bestBid, asks start at bestAsk — gap in between (prices differ per exchange)
+            var bidPrices = allBidPrices.filter(function (p) { return p >= minPrice && p <= bestBid; }).sort(function (a, b) { return a - b; });
+            var askPrices = allAskPrices.filter(function (p) { return p >= bestAsk && p <= maxPrice; }).sort(function (a, b) { return a - b; });
+
             function near(a, b) { return Math.abs((a || 0) - (b || 0)) < 1e-4; }
-            data.forEach(function (orderBook) {
-                var lastCumVolumeBid = 0, bidIndex = 0, bids = orderBook.bids || [];
-                bidPriceLevels.forEach(function (level) {
-                    if (bids[bidIndex] && near(bids[bidIndex].price, level.price)) { lastCumVolumeBid = bids[bidIndex].cumVolume; bidIndex++; }
-                    level[orderBook.exchange] = lastCumVolumeBid;
+            var bidLevels = bidPrices.map(function (p) { return { price: p }; });
+            var askLevels = askPrices.map(function (p) { return { price: p }; });
+            var exchanges = data.map(function (d) { return d.exchange; });
+
+            // For each exchange: at each level, use cumVolume from best bid/ask at or inside that price.
+            data.forEach(function (ob) {
+                var bids = ob.bids || [];
+                bidLevels.forEach(function (lev) {
+                    var c = 0;
+                    for (var i = bids.length - 1; i >= 0; i--) if (bids[i].price >= lev.price) { c = bids[i].cumVolume; break; }
+                    lev[ob.exchange] = c;
                 });
-                var lastCumVolumeAsk = 0, askIndex = 0, asks = orderBook.asks || [];
-                askPriceLevels.forEach(function (level) {
-                    if (asks[askIndex] && near(asks[askIndex].price, level.price)) { lastCumVolumeAsk = asks[askIndex].cumVolume; askIndex++; }
-                    level[orderBook.exchange] = lastCumVolumeAsk;
+                var asks = ob.asks || [];
+                askLevels.forEach(function (lev) {
+                    var c = 0;
+                    for (var i = asks.length - 1; i >= 0; i--) if (asks[i].price <= lev.price) { c = asks[i].cumVolume; break; }
+                    lev[ob.exchange] = c;
                 });
             });
 
-            // Stack the data for bids and asks separately
-            const exchanges = data.map(d => d.exchange);
-            const stack = d3.stack()
-                .keys(exchanges)
-                .order(d3.stackOrderNone)
-                .offset(d3.stackOffsetNone);
+            var firstBid = bidLevels[0], lastBid = bidLevels[bidLevels.length - 1];
+            var firstAsk = askLevels[0], lastAsk = askLevels[askLevels.length - 1];
+            // Left edge: bids extend to minPrice at worst-bid cum; right edge: bids extend to bestBid at best-bid cum (into the gap)
+            if (firstBid) {
+                var ebLeft = { price: minPrice };
+                exchanges.forEach(function (e) { ebLeft[e] = firstBid[e] != null ? firstBid[e] : 0; });
+                bidLevels.unshift(ebLeft);
+            }
+            if (lastBid) {
+                var ebRight = { price: bestBid };
+                exchanges.forEach(function (e) { ebRight[e] = lastBid[e] != null ? lastBid[e] : 0; });
+                bidLevels.push(ebRight);
+            }
+            // Left edge: asks start at bestAsk at best-ask cum (out of the gap); right edge: asks extend to maxPrice
+            if (firstAsk) {
+                var eaLeft = { price: bestAsk };
+                exchanges.forEach(function (e) { eaLeft[e] = firstAsk[e] != null ? firstAsk[e] : 0; });
+                askLevels.unshift(eaLeft);
+            }
+            if (lastAsk) {
+                var eaRight = { price: maxPrice };
+                exchanges.forEach(function (e) { eaRight[e] = lastAsk[e] != null ? lastAsk[e] : 0; });
+                askLevels.push(eaRight);
+            }
 
-            const stackedBids = stack(bidPriceLevels);
-            const stackedAsks = stack(askPriceLevels);
+            // Stack layers on top of each other (default d3 offset overlaps at 0)
+            function stackOnTop(series, order) {
+                var n = series.length, m = n ? series[0].length : 0;
+                for (var j = 0; j < m; j++) {
+                    var s0 = 0;
+                    for (var i = 0; i < n; i++) {
+                        var d = series[i][j];
+                        var v = d[1] - d[0];
+                        d[0] = s0;
+                        d[1] = s0 + v;
+                        s0 = d[1];
+                    }
+                }
+            }
+            bidLevels = resampleLevels(bidLevels, 72, minPrice, bestBid, exchanges);
+            askLevels = resampleLevels(askLevels, 72, bestAsk, maxPrice, exchanges);
 
-            // Update scales
-            const allPrices = bidPrices.concat(askPrices);
-            const maxVolume = d3.max([...stackedBids, ...stackedAsks], layer => d3.max(layer, d => d[1]));
+            var stack = d3.stack().keys(exchanges).order(d3.stackOrderNone).offset(stackOnTop);
+            var stackedBids = stack(bidLevels);
+            var stackedAsks = stack(askLevels);
 
-            if (allPrices.length === 0) return;
-            x.domain([d3.min(allPrices), d3.max(allPrices)]);
-            y.domain([0, (maxVolume && isFinite(maxVolume)) ? maxVolume : 1]);
+            x.domain([minPrice, maxPrice]);
+            var maxVol = d3.max([].concat(stackedBids, stackedAsks), function (ly) { return d3.max(ly, function (d) { return d[1]; }); });
+            if (maxVol && isFinite(maxVol)) {
+                if (smoothedYMax != null && maxVol < smoothedYMax) {
+                    smoothedYMax = smoothedYMax * 0.90 + maxVol * 0.10;
+                } else {
+                    smoothedYMax = maxVol;
+                }
+            }
+            y.domain([0, (smoothedYMax && isFinite(smoothedYMax)) ? smoothedYMax : 1]);
 
-            // Axes: match Orderbook tool number style (JetBrains Mono, K/M/B for y; decimals for x)
-            var priceRange = d3.max(allPrices) - d3.min(allPrices) || 1;
-            var fmtX = priceRange < 0.0001 ? function (v) { return v.toFixed(6); } : priceRange < 0.01 ? function (v) { return v.toFixed(4); } : priceRange < 1 ? function (v) { return v.toFixed(3); } : function (v) { return d3.format(',.2f')(v); };
+            var baseStep = bpsWidth <= 0.004 ? 50 : bpsWidth <= 0.01 ? 100 : bpsWidth <= 0.02 ? 200 : bpsWidth >= 0.1 ? 1000 : 500;
+            var ref = 100000, raw = baseStep * (Math.max(midPrice, 0.01) / ref);
+            var mag = raw <= 0 ? 1e-8 : Math.pow(10, Math.floor(Math.log10(raw)));
+            var norm = raw / mag;
+            var nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+            var priceStep = Math.max(mag * nice, 1e-8);
+            var xStart = Math.ceil(minPrice / priceStep) * priceStep;
+            var xTickValues = [];
+            for (var v = xStart; v <= maxPrice; v += priceStep) xTickValues.push(v);
+            var maxXTicks = Math.max(3, Math.floor(chartWidth / 90));
+            if (xTickValues.length > maxXTicks) { var st = Math.ceil(xTickValues.length / maxXTicks); xTickValues = xTickValues.filter(function (_, i) { return i % st === 0; }); }
+
+            // Gap in the middle: bestBid to bestAsk (prices differ per exchange); graphs run into the gap
+            gapGroup.selectAll('*').remove();
+            var xLo = x(bestBid), xHi = x(bestAsk);
+            if (xHi > xLo) {
+                gapGroup.append('rect')
+                    .attr('x', xLo).attr('y', 0).attr('width', xHi - xLo).attr('height', chartHeight)
+                    .attr('fill', 'var(--accent-primary)').attr('opacity', 0.06);
+                gapGroup.append('line').attr('class', 'gap-edge').attr('x1', xLo).attr('x2', xLo).attr('y1', 0).attr('y2', chartHeight)
+                    .attr('stroke', 'var(--accent-primary)').attr('stroke-width', 1).attr('stroke-dasharray', '3,3').attr('opacity', 0.4);
+                gapGroup.append('line').attr('class', 'gap-edge').attr('x1', xHi).attr('x2', xHi).attr('y1', 0).attr('y2', chartHeight)
+                    .attr('stroke', 'var(--accent-primary)').attr('stroke-width', 1).attr('stroke-dasharray', '3,3').attr('opacity', 0.4);
+            }
+
+            gridGroup.selectAll('.grid-line').remove();
+            var yTickCount = Math.max(3, Math.floor(chartHeight / 50));
+            var yTicks = y.ticks(yTickCount);
+            yTicks.forEach(function (t) {
+                gridGroup.append('line').attr('class', 'grid-line').attr('x1', 0).attr('x2', chartWidth).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', 'var(--accent-blue)').attr('stroke-width', 0.5).attr('opacity', 0.15).attr('stroke-dasharray', '2,4');
+            });
+            var xTicks = xTickValues.length >= 2 ? xTickValues : x.ticks(maxXTicks);
+            xTicks.forEach(function (t) {
+                gridGroup.append('line').attr('class', 'grid-line').attr('x1', x(t)).attr('x2', x(t)).attr('y1', 0).attr('y2', chartHeight).attr('stroke', 'var(--accent-primary)').attr('stroke-width', 0.5).attr('opacity', 0.1).attr('stroke-dasharray', '2,4');
+            });
+
+            var fmtX = priceStep < 0.0001 ? function (v) { return v.toFixed(6); } : priceStep < 0.01 ? function (v) { return v.toFixed(4); } : priceStep < 1 ? function (v) { return v.toFixed(3); } : function (v) { return d3.format(',.2f')(v); };
             var fmtY = function (d) { return d >= 1e9 ? (d / 1e9).toFixed(1) + 'B' : d >= 1e6 ? (d / 1e6).toFixed(1) + 'M' : d >= 1e3 ? (d / 1e3).toFixed(1) + 'K' : d3.format(',.0f')(d); };
-            xAxis.transition().duration(200).ease(d3.easeCubicInOut).call(d3.axisBottom(x).ticks(5).tickFormat(fmtX).tickSizeInner(4).tickSizeOuter(0).tickPadding(2));
-            yAxis.transition().duration(200).ease(d3.easeCubicInOut).call(d3.axisLeft(y).ticks(4).tickFormat(fmtY).tickSizeInner(4).tickSizeOuter(0).tickPadding(2));
+            var xAxisFn = function () { var ax = d3.axisBottom(x).tickFormat(fmtX).tickSizeInner(4).tickSizeOuter(0).tickPadding(2); if (xTickValues.length >= 2) ax.tickValues(xTickValues); else ax.ticks(maxXTicks); return ax; };
+            var yAxisFn = function () { return d3.axisLeft(y).tickFormat(fmtY).ticks(yTickCount).tickSizeInner(4).tickSizeOuter(0).tickPadding(2); };
+            if (useTransition) { xAxis.transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut).call(xAxisFn()); yAxis.transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut).call(yAxisFn()); } else { xAxis.call(xAxisFn()); yAxis.call(yAxisFn()); }
 
-            // Cancel in-flight transitions before replacing (avoids D3/RAF buildup)
-            svg.selectAll('.area, .line').interrupt();
-            svg.selectAll('.area').remove();
-            svg.selectAll('.line').remove();
-            svg.selectAll('.legend').remove();
+            var bidAreaGen = stepCurve(d3.area().x(function (d) { return x(d.data.price); }).y0(function (d) { return y(d[0]); }).y1(function (d) { return y(d[1]); }));
+            var bidLineGen = stepCurve(d3.line().x(function (d) { return x(d.data.price); }).y(function (d) { return y(d[1]); }));
+            var askAreaGen = stepCurve(d3.area().x(function (d) { return x(d.data.price); }).y0(function (d) { return y(d[0]); }).y1(function (d) { return y(d[1]); }));
+            var askLineGen = stepCurve(d3.line().x(function (d) { return x(d.data.price); }).y(function (d) { return y(d[1]); }));
 
-            // Define area generator
-            const areaGenerator = d3.area()
-                .x(d => x(d.data.price))
-                .y0(d => y(d[0]))
-                .y1(d => y(d[1]));
+            function joinPath(grp, cls, data, colorFn, gen, isArea) {
+                var sel = grp.selectAll('path.' + cls).data(data, function (d) { return d.key; });
+                sel.join(
+                    function (enter) {
+                        var p = enter.append('path').attr('class', (isArea ? 'area ' : 'line ') + cls);
+                        if (isArea) p.style('fill', colorFn); else p.style('stroke', colorFn);
+                        return p.attr('d', gen);
+                    },
+                    function (update) {
+                        if (!useTransition) return update.attr('d', gen);
+                        return update.transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut).attr('d', gen);
+                    },
+                    function (exit) { return exit.remove(); }
+                );
+            }
+            joinPath(bidAreaGroup, 'bid-area', stackedBids, function (d) { return EXCHANGE_COLORS[d.key] || '#94a3b8'; }, bidAreaGen, true);
+            joinPath(bidLineGroup, 'bid-line', stackedBids, function (d) { return EXCHANGE_COLORS[d.key] || '#94a3b8'; }, bidLineGen, false);
+            joinPath(askAreaGroup, 'ask-area', stackedAsks, function (d) { return EXCHANGE_COLORS[d.key] || '#94a3b8'; }, askAreaGen, true);
+            joinPath(askLineGroup, 'ask-line', stackedAsks, function (d) { return EXCHANGE_COLORS[d.key] || '#94a3b8'; }, askLineGen, false);
 
-            // Define line generator for individual exchange cumulative volume
-            const lineGenerator = d3.line()
-                .x(d => x(d.data.price))
-                .y(d => y(d[1])); // d[1] is y1 of the current layer
-
-            // Draw stacked bid areas and lines (immediate opacity for reliable render, no fade)
-            stackedBids.forEach(function (layer) {
-                svg.append('path').datum(layer).attr('class', 'area').attr('d', areaGenerator).style('fill', color(layer.key)).style('opacity', 0.32);
-            });
-            stackedBids.slice().reverse().forEach(function (layer) {
-                svg.append('path').datum(layer).attr('class', 'line').attr('d', lineGenerator).style('stroke', color(layer.key)).style('stroke-width', 1.5).style('opacity', 1);
-            });
-            stackedAsks.forEach(function (layer) {
-                svg.append('path').datum(layer).attr('class', 'area').attr('d', areaGenerator).style('fill', color(layer.key)).style('opacity', 0.32);
-            });
-            stackedAsks.slice().reverse().forEach(function (layer) {
-                svg.append('path').datum(layer).attr('class', 'line').attr('d', lineGenerator).style('stroke', color(layer.key)).style('stroke-width', 1.5).style('opacity', 1);
-            });
-            // Update legend
-            updateLegend(data);
+            // Legend
+            legendGroup.selectAll('g.legend').remove();
+            var leg = legendGroup.selectAll('g.legend').data(exchanges).enter().append('g').attr('class', 'legend').attr('transform', function (d, i) { return 'translate(0,' + (i * 14) + ')'; });
+            leg.append('rect').attr('width', 10).attr('height', 10).attr('fill', function (d) { return EXCHANGE_COLORS[d] || '#94a3b8'; }).attr('opacity', 0.8);
+            leg.append('text').attr('x', 14).attr('y', 8).attr('dy', '0.3em').attr('class', 'legend').text(function (d) { return d; });
         }
 
-        // Function to update the legend (compact)
-        function updateLegend(data) {
-            const legend = svg.selectAll('.legend')
-                .data(data.map(d => d.exchange))
-                .enter()
-                .append('g')
-                .attr('class', 'legend')
-                .attr('transform', (d, i) => `translate(0, ${i * 15})`);
-
-            legend.append('rect')
-                .attr('x', width + 56)
-                .attr('width', 14)
-                .attr('height', 14)
-                .style('fill', d => color(d))
-                .style('opacity', 0.85);
-
-            legend.append('text')
-                .attr('x', width + 50)
-                .attr('y', 7)
-                .attr('dy', '.35em')
-                .style('text-anchor', 'end')
-                .style('font-size', '11px')
-                .style('font-family', "'JetBrains Mono', monospace")
-                .style('font-weight', '600')
-                .style('fill', '#bae6fd')
-                .text(d => d);
-        }
-
-        // Throttle UI updates (allow first paint immediately, then ~4 fps)
-        var updateLast = 0, UPDATE_THROTTLE_MS = 260;
-        function onDataThrottled(data) {
+        var updateLast = 0, MIN_RENDER = 480;
+        function onData(data) {
             if (!data || data.length === 0) return;
             var now = Date.now();
-            if (updateLast > 0 && now - updateLast < UPDATE_THROTTLE_MS) return;
+            if (now - updateLast < MIN_RENDER && updateLast > 0) return;
             updateLast = now;
-            try { update(data); } catch (e) { console.warn('stacked-orderbook update', e); }
+            window.stackedLastData = data;
+            try { update(data); } catch (e) { console.warn('stacked update', e); }
         }
 
         var disconnect = null;
+        window.stackedOrderbookRange = document.getElementById('range-select').value || '0.01';
+        window.stackedOrderbookSymbol = document.getElementById('symbol-select').value || 'BTC/USDT';
 
-        function startLive(symbol) {
+        function start(sym) {
             if (disconnect) { disconnect(); disconnect = null; }
-            if (typeof startMultiExchangeOrderbook !== 'function') {
-                document.getElementById('status').textContent = 'Error: multi-exchange script not available.';
-                return;
-            }
-            document.getElementById('status').textContent = 'Live: Binance, Kraken, Coinbase — ' + symbol;
-            disconnect = startMultiExchangeOrderbook(symbol, onDataThrottled);
+            smoothedYMax = null;
+            window.stackedOrderbookSymbol = sym;
+            disconnect = window.startMultiExchangeOrderbook(sym, onData);
         }
 
-        document.getElementById('symbol').addEventListener('change', function () {
-            startLive(this.value);
+        document.getElementById('symbol-select').addEventListener('change', function () { start(this.value); });
+        document.getElementById('range-select').addEventListener('change', function () {
+            window.stackedOrderbookRange = this.value;
+            if (window.stackedLastData) update(window.stackedLastData);
         });
 
-        startLive(document.getElementById('symbol').value);
+        async function fetchTradingPairs() {
+            try {
+                var r = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+                var d = await r.json();
+                return (d.symbols || []).filter(function (s) { return s.status === 'TRADING' && (s.symbol || '').endsWith('USDT'); }).map(function (s) { return { symbol: s.symbol, displaySymbol: (s.baseAsset || '') + '/' + (s.quoteAsset || '') }; }).sort(function (a, b) { return (a.displaySymbol || '').localeCompare(b.displaySymbol || ''); });
+            } catch (e) { return []; }
+        }
+        fetchTradingPairs().then(function (pairs) {
+            var sel = document.getElementById('symbol-select');
+            if (!sel) return;
+            var cur = window.stackedOrderbookSymbol;
+            sel.innerHTML = (pairs.length ? pairs : [{ displaySymbol: 'BTC/USDT' }]).map(function (p) { return '<option value="' + (p.displaySymbol || p) + '">' + (p.displaySymbol || p) + '</option>'; }).join('');
+            if (cur) { var opt = sel.querySelector('option[value="' + cur + '"]'); if (opt) sel.value = cur; }
+        });
+
+        var resizeTimeout;
+        function onResize() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function () { if (window.stackedLastData) update(window.stackedLastData); }, 100);
+        }
+        window.addEventListener('resize', onResize);
+        (new ResizeObserver(onResize)).observe(chartContainer);
+
+        function drawInitialFrame() {
+            x.domain([0, 100]);
+            y.domain([0, 1]);
+            xAxis.call(d3.axisBottom(x).ticks(5).tickSizeInner(4).tickSizeOuter(0).tickPadding(2));
+            yAxis.call(d3.axisLeft(y).ticks(4).tickSizeInner(4).tickSizeOuter(0).tickPadding(2));
+            chartGroup.append('text').attr('class', 'loading-text').attr('x', chartWidth / 2).attr('y', chartHeight / 2).attr('text-anchor', 'middle').attr('dy', '0.35em').attr('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono').style('font-size', '13px').text('Loading orderbook…');
+        }
+        drawInitialFrame();
+
+        start(window.stackedOrderbookSymbol);
+        } catch (e) {
+            chartContainer.innerHTML = '<p style="color:#f43f5e;padding:20px;font-family:JetBrains Mono">Chart error: ' + (e && e.message || String(e)) + '</p>';
+        }
+        }
+        if (typeof d3 === 'undefined') {
+            document.getElementById('chart').innerHTML = '<p style="color:#94a3b8;padding:20px;font-family:JetBrains Mono">D3 failed to load. Check the console.</p>';
+        } else {
+            initChart();
+        }
     </script>
 </body>
 

@@ -17,7 +17,7 @@ const OrderbookTool = () => {
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     iframe.style.background = 'transparent';
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    iframe.setAttribute('sandbox', 'allow-scripts');
     
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(iframe);

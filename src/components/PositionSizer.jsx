@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { ArrowUp, ArrowDown, Zap, Search } from 'lucide-react';
-import { fetchTradingPairs, formatSymbolForBinance } from '../lib/binance';
+import { fetchTradingPairs } from '../lib/binance';
 import { useLivePrice } from '../hooks/useLivePrice';
 import PriceChart from './PriceChart';
 import './PositionSizer.css';
@@ -92,13 +92,6 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     }
   }, [symbolSearch, tradingPairs]);
 
-  // Auto-fill current price when symbol changes and live price is available
-  useEffect(() => {
-    if (livePrice && !openPrice) {
-      setOpenPrice(livePrice.toFixed(2));
-    }
-  }, [livePrice, openPrice]);
-
   useEffect(() => {
     if (openPrice && stopLoss && rValue) {
       const open = parseFloat(openPrice);
@@ -114,8 +107,7 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
         stopLossPercent = ((sl - open) / open) * 100;
       }
       
-      // With leverage, the effective stop loss percentage is amplified
-      const effectiveStopLossPercent = stopLossPercent * leverage;
+
       
       // Position size = Risk Amount / (Stop Loss % * Leverage adjustment)
       const positionSize = (risk / (stopLossPercent / 100));
@@ -184,6 +176,7 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
       riskMultiple: riskMultiple,
       openDate: selectedDate.toISOString(),
       status: 'open',
+      fee: 0,
     };
 
     onNewTrade(trade);
@@ -197,7 +190,7 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
   };
 
   return (
-    <div className="position-sizer-h">
+    <div className="position-sizer-h glass-card">
       {/* Header */}
       <div className="sizer-header-h">
         <div className="header-left">
@@ -285,13 +278,18 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
                   className="symbol-input"
                 />
                 {livePrice && symbol && (
-                  <div className="live-price-badge">
+                  <button
+                    type="button"
+                    className="live-price-badge"
+                    onClick={() => setOpenPrice(livePrice.toFixed(2))}
+                    title="Click to use as entry price"
+                  >
                     {priceLoading ? (
                       <span className="price-loading">...</span>
                     ) : (
                       <span className="price-value">${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
                     )}
-                  </div>
+                  </button>
                 )}
                 {showSymbolDropdown && (
                   <div ref={dropdownRef} className="symbol-dropdown">

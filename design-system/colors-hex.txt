@@ -1,0 +1,36 @@
+# CoinClash — HEX quick reference (copy‑paste into Figma)
+
+## Background
+#050a12  #080e1a  #0c1524  #0f1a2e  #131f35  #03060c
+
+## Text
+#f0f9ff  #bae6fd  #94a3b8
+
+## Accent
+#22d3ee  #06b6d4  #38bdf8  #2dd4bf  #fbbf24  #f59e0b  #a78bfa
+
+## Semantic — Success
+#2dd4bf  #5eead4  #14b8a6
+
+## Semantic — Danger
+#f43f5e  #fb7185  #e11d48
+
+## Semantic — Other
+#fbbf24  #6366f1
+
+## Shadows / utility
+#001529  #000000
+
+
+## Border base (use with opacity 8% / 12% / 20%)
+#22d3ee
+
+## Gradients (stops for Paint styles)
+Background metallic:  #0c1524 → #050a12 → #03060c  (145°)
+Background app:       #080e1a → #050a12 → #03060c  (180°)
+Success:              #5eead4 → #2dd4bf → #14b8a6  (180°)
+Success CTA:          #2dd4bf → #14b8a6            (135°)
+Danger:               #fb7185 → #f43f5e → #e11d48  (180°)
+Card:                 #22d3ee 4% → #FFFFFF 2% → transparent  (165°)
+Shine:                transparent → #22d3ee 4% → transparent  (90°)
+Accent focus:         #22d3ee 10% → #06b6d4 5%     (135°)

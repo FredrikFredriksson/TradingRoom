@@ -1,0 +1,184 @@
+{
+  "$description": "CoinClash color and layout tokens for Figma (Tokens Studio for Figma, Style Dictionary, or manual import).",
+  "CoinClash": {
+    "color": {
+      "background": {
+        "primary": { "value": "#050a12", "type": "color" },
+        "secondary": { "value": "#080e1a", "type": "color" },
+        "tertiary": { "value": "#0c1524", "type": "color" },
+        "elevated": { "value": "#0f1a2e", "type": "color" },
+        "hover": { "value": "#131f35", "type": "color" },
+        "deep": { "value": "#03060c", "type": "color" }
+      },
+      "text": {
+        "primary": { "value": "#f0f9ff", "type": "color" },
+        "secondary": { "value": "#bae6fd", "type": "color" },
+        "muted": { "value": "#94a3b8", "type": "color" }
+      },
+      "accent": {
+        "primary": { "value": "#22d3ee", "type": "color" },
+        "secondary": { "value": "#06b6d4", "type": "color" },
+        "blue": { "value": "#38bdf8", "type": "color" },
+        "emerald": { "value": "#2dd4bf", "type": "color" },
+        "amber": { "value": "#fbbf24", "type": "color" },
+        "amberDark": { "value": "#f59e0b", "type": "color" },
+        "violet": { "value": "#a78bfa", "type": "color" }
+      },
+      "semantic": {
+        "success": { "value": "#2dd4bf", "type": "color" },
+        "successBright": { "value": "#5eead4", "type": "color" },
+        "successDark": { "value": "#14b8a6", "type": "color" },
+        "danger": { "value": "#f43f5e", "type": "color" },
+        "dangerBright": { "value": "#fb7185", "type": "color" },
+        "dangerDark": { "value": "#e11d48", "type": "color" },
+        "warning": { "value": "#fbbf24", "type": "color" },
+        "info": { "value": "#22d3ee", "type": "color" },
+        "neutral": { "value": "#6366f1", "type": "color" }
+      },
+      "border": {
+        "subtle": { "value": "rgba(34, 211, 238, 0.08)", "type": "color" },
+        "default": { "value": "rgba(34, 211, 238, 0.12)", "type": "color" },
+        "bright": { "value": "rgba(34, 211, 238, 0.2)", "type": "color" },
+        "accent25": { "value": "rgba(34, 211, 238, 0.25)", "type": "color" },
+        "accent30": { "value": "rgba(34, 211, 238, 0.3)", "type": "color" }
+      },
+      "exchange": {
+        "binance": { "value": "#2dd4bf", "type": "color" },
+        "kraken": { "value": "#f43f5e", "type": "color" },
+        "coinbase": { "value": "#38bdf8", "type": "color" },
+        "hyperliquid": { "value": "#a78bfa", "type": "color" }
+      },
+      "chart": {
+        "fallback": { "value": "#94a3b8", "type": "color" }
+      }
+    },
+    "radius": {
+      "xs": { "value": "0", "type": "borderRadius" },
+      "sm": { "value": "1", "type": "borderRadius" },
+      "md": { "value": "2", "type": "borderRadius" },
+      "lg": { "value": "3", "type": "borderRadius" }
+    },
+    "shadow": {
+      "sm": {
+        "value": {
+          "x": 0,
+          "y": 1,
+          "blur": 2,
+          "spread": 0,
+          "color": "#000000",
+          "opacity": 0.4
+        },
+        "type": "boxShadow"
+      },
+      "md": {
+        "value": {
+          "x": 0,
+          "y": 4,
+          "blur": 12,
+          "spread": 0,
+          "color": "#001529",
+          "opacity": 0.5
+        },
+        "type": "boxShadow"
+      },
+      "lg": {
+        "value": {
+          "x": 0,
+          "y": 8,
+          "blur": 30,
+          "spread": 0,
+          "color": "#001529",
+          "opacity": 0.6
+        },
+        "type": "boxShadow"
+      },
+      "glowCyan": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 40,
+          "spread": 0,
+          "color": "#22d3ee",
+          "opacity": 0.25
+        },
+        "type": "boxShadow"
+      },
+      "glowBlue": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 40,
+          "spread": 0,
+          "color": "#38bdf8",
+          "opacity": 0.25
+        },
+        "type": "boxShadow"
+      },
+      "glowEmerald": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 40,
+          "spread": 0,
+          "color": "#2dd4bf",
+          "opacity": 0.25
+        },
+        "type": "boxShadow"
+      },
+      "glowRose": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 40,
+          "spread": 0,
+          "color": "#f43f5e",
+          "opacity": 0.25
+        },
+        "type": "boxShadow"
+      },
+      "focusRing": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "spread": 3,
+          "color": "#22d3ee",
+          "opacity": 0.15
+        },
+        "type": "boxShadow"
+      },
+      "focusRingDanger": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "spread": 3,
+          "color": "#f43f5e",
+          "opacity": 0.15
+        },
+        "type": "boxShadow"
+      },
+      "focusRingSuccess": {
+        "value": {
+          "x": 0,
+          "y": 0,
+          "blur": 0,
+          "spread": 3,
+          "color": "#2dd4bf",
+          "opacity": 0.15
+        },
+        "type": "boxShadow"
+      }
+    },
+    "gradient": {
+      "backgroundMetallic": { "value": "linear-gradient(145deg, #0c1524 0%, #050a12 50%, #03060c 100%)", "type": "gradient" },
+      "backgroundApp": { "value": "linear-gradient(180deg, #080e1a 0%, #050a12 45%, #03060c 100%)", "type": "gradient" },
+      "card": { "value": "linear-gradient(165deg, #134e4a 0%, #0c1524 30%, #050a12 100%)", "type": "gradient" },
+      "shine": { "value": "linear-gradient(90deg, #0c1524 0%, #1e293b 50%, #0c1524 100%)", "type": "gradient" },
+      "success": { "value": "linear-gradient(180deg, #5eead4 0%, #2dd4bf 40%, #14b8a6 100%)", "type": "gradient" },
+      "successCta": { "value": "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)", "type": "gradient" },
+      "danger": { "value": "linear-gradient(180deg, #fb7185 0%, #f43f5e 40%, #e11d48 100%)", "type": "gradient" },
+      "accentFocus": { "value": "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)", "type": "gradient" }
+    }
+  }
+}

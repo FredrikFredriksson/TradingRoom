@@ -1,0 +1,7 @@
+{
+  "name": "CoinClash Glass Card",
+  "id": "coinclash-glass-card",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}

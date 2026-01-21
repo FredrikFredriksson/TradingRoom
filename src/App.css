@@ -85,10 +85,8 @@
   display: flex;
   gap: 4px;
   margin-bottom: 24px;
-  background: var(--bg-secondary);
   padding: 4px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
   width: fit-content;
 }
 
@@ -158,11 +156,28 @@
   max-width: 100%;
 }
 
-/* Trade Layout - Position Sizer */
+/* Trade Layout - Place Trade (left) + Active Trades (right) */
 .trade-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
   max-width: 100%;
   width: 100%;
   margin: 0;
+}
+
+.trade-layout-place {
+  flex: 1;
+  min-width: 0;
+}
+
+.trade-layout-active {
+  flex-shrink: 0;
+  width: 380px;
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
 }
 
 /* Animation */
@@ -185,6 +200,23 @@
 }
 
 .dashboard-left::-webkit-scrollbar-thumb:hover {
+  background: var(--border-bright);
+}
+
+.trade-layout-active::-webkit-scrollbar {
+  width: 6px;
+}
+
+.trade-layout-active::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trade-layout-active::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.trade-layout-active::-webkit-scrollbar-thumb:hover {
   background: var(--border-bright);
 }
 
@@ -216,5 +248,15 @@
   
   .dashboard-layout {
     gap: 16px;
+  }
+
+  .trade-layout {
+    flex-direction: column;
+  }
+
+
+  .trade-layout-active {
+    width: 100%;
+    position: static;
   }
 }

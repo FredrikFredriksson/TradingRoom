@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useLivePrice } from '../hooks/useLivePrice';
 import './ActiveTrades.css';
 
 const ActiveTrades = ({ trades, onCloseTrade }) => {
   const [closingTrade, setClosingTrade] = useState(null);
   const [closePrice, setClosePrice] = useState('');
   const [closeComment, setCloseComment] = useState('');
+  const { price: livePrice, loading: livePriceLoading } = useLivePrice(closingTrade?.symbol || '');
 
   const activeTrades = trades.filter(t => t.status === 'open');
 
@@ -48,7 +50,7 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
 
   if (activeTrades.length === 0) {
     return (
-      <div className="active-trades empty">
+      <div className="active-trades empty glass-card">
         <div className="empty-state">
           <span className="empty-icon">📊</span>
           <h3>No Active Trades</h3>
@@ -59,7 +61,7 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
   }
 
   return (
-    <div className="active-trades">
+    <div className="active-trades glass-card">
       <h2>Active Trades</h2>
       <div className="trades-list">
         {activeTrades.map((trade) => {
@@ -78,38 +80,51 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
               
               <div className="trade-details">
                 <div className="detail-row">
-                  <span className="detail-label">Entry</span>
+                  <span className="detail-label">Ent</span>
                   <span className="detail-value">${trade.openPrice.toLocaleString()}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Stop Loss</span>
+                  <span className="detail-label">SL</span>
                   <span className="detail-value negative">${trade.stopLoss.toLocaleString()}</span>
                 </div>
                 {trade.takeProfit && (
                   <div className="detail-row">
-                    <span className="detail-label">Take Profit</span>
+                    <span className="detail-label">TP</span>
                     <span className="detail-value positive">${trade.takeProfit.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="detail-row">
-                  <span className="detail-label">Position Size</span>
+                  <span className="detail-label">Size</span>
                   <span className="detail-value">${trade.positionSize.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Risk</span>
+                  <span className="detail-label">R</span>
                   <span className="detail-value risk">${trade.riskAmount.toFixed(2)} ({trade.riskMultiple}R)</span>
                 </div>
               </div>
 
               {closingTrade?.id === trade.id ? (
                 <div className="close-trade-form">
-                  <input
-                    type="number"
-                    value={closePrice}
-                    onChange={(e) => setClosePrice(e.target.value)}
-                    placeholder="Closing Price"
-                    autoFocus
-                  />
+                  <div className="close-price-row">
+                    <input
+                      type="number"
+                      value={closePrice}
+                      onChange={(e) => setClosePrice(e.target.value)}
+                      placeholder="Exit price"
+                      autoFocus
+                    />
+                    {livePrice != null && (
+                      <button
+                        type="button"
+                        className="use-live-price-btn"
+                        onClick={() => setClosePrice(livePrice.toFixed(2))}
+                        disabled={livePriceLoading}
+                        title="Use current market price"
+                      >
+                        {livePriceLoading ? '...' : `$${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`}
+                      </button>
+                    )}
+                  </div>
                   {pnl && (
                     <div className={`pnl-preview ${pnl.pnlDollar >= 0 ? 'positive' : 'negative'}`}>
                       {pnl.pnlDollar >= 0 ? '+' : ''}{pnl.pnlPercent.toFixed(2)}% 
@@ -119,13 +134,13 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   <textarea
                     value={closeComment}
                     onChange={(e) => setCloseComment(e.target.value)}
-                    placeholder="Add a comment about this trade (optional)..."
+                    placeholder="Comment (optional)"
                     className="close-comment"
-                    rows={3}
+                    rows={2}
                   />
                   <div className="close-actions">
                     <button className="confirm-btn" onClick={handleConfirmClose}>
-                      Confirm Close
+                      Confirm
                     </button>
                     <button className="cancel-btn" onClick={handleCancelClose}>
                       Cancel
@@ -137,17 +152,12 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   className="close-trade-btn"
                   onClick={() => handleCloseClick(trade)}
                 >
-                  Close Trade
+                  Close
                 </button>
               )}
 
               <div className="trade-date">
-                Opened: {new Date(trade.openDate).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+                {new Date(trade.openDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           );
