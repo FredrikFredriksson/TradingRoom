@@ -179,8 +179,8 @@
 /* Active Trades Grid */
 .active-trades-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 24px;
 }
 
 .active-trade-card {
@@ -190,6 +190,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
   overflow: hidden;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
 }
 
 .active-trade-card:hover {
@@ -197,13 +200,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(186, 230, 253, 0.06);
 }
 
-.active-trade-card.long {
-  border-top: 3px solid var(--color-success);
-}
-
-.active-trade-card.short {
-  border-top: 3px solid var(--color-danger);
-}
 
 .trade-card-header {
   display: flex;
@@ -271,6 +267,15 @@
 
 .trade-card-body {
   padding: 20px;
+}
+
+.trade-chart-container {
+  margin-bottom: 20px;
+  width: 100%;
+  flex: 1;
+  min-height: 380px;
+  display: flex;
+  align-items: stretch;
 }
 
 .trade-price-row {
@@ -1673,5 +1678,9 @@
   
   .calendar-day-pnl {
     font-size: 0.65rem;
+  }
+  
+  .trade-chart-container {
+    margin-bottom: 12px;
   }
 }

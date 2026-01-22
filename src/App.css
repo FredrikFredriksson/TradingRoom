@@ -150,6 +150,12 @@
   max-width: 100%;
 }
 
+/* Balance Layout */
+.balance-layout {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Analytics Layout */
 .analytics-layout {
   width: 100%;
@@ -173,7 +179,8 @@
 
 .trade-layout-active {
   flex-shrink: 0;
-  width: 380px;
+  width: 600px;
+  min-width: 600px;
   position: sticky;
   top: 0;
   max-height: calc(100vh - 180px);

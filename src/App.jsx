@@ -1,14 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { LayoutDashboard, Zap, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { LayoutDashboard, Zap, AlertTriangle, Wallet } from 'lucide-react';
 import Header from './components/Header';
 import PositionSizer from './components/PositionSizer';
 import ActiveTrades from './components/ActiveTrades';
 import TradingJournal from './components/TradingJournal';
+import Balance from './components/Balance';
+import Auth from './components/Auth';
 // import Analytics from './components/Analytics';
 import { supabase, tradesApi, settingsApi, dbToAppTrade } from './lib/supabase';
+import { useUnrealizedPnL } from './hooks/useUnrealizedPnL';
 import './App.css';
 
 function App() {
+  // Authentication state
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   // R value configuration (how much $ equals 1R)
   const [rValue, setRValue] = useState(() => {
     const saved = localStorage.getItem('tradingRoom_rValue');
@@ -25,53 +32,87 @@ function App() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [supabaseConnected, setSupabaseConnected] = useState(false);
+  const xauTradeAddedRef = useRef(false);
 
-  // Active tab (Analytics commented out for now: 'analytics' | 'dashboard' | 'trade')
+  // Active tab (Analytics commented out for now: 'analytics' | 'dashboard' | 'balance' | 'trade')
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Check Supabase connection and load initial data
-  useEffect(() => {
-    const initializeData = async () => {
-      if (supabase) {
-        setSupabaseConnected(true);
-        
-        // Load settings (R value and balance)
-        const { data: settings } = await settingsApi.get();
-        if (settings?.r_value) {
-          setRValue(settings.r_value);
-        }
-        if (settings?.balance !== undefined && settings?.balance !== null) {
-          setBalance(settings.balance);
-        }
-        
-        // Load all trades from Supabase
-        const { data: dbTrades, error } = await tradesApi.getAll();
-        if (!error && dbTrades && dbTrades.length > 0) {
-          const convertedTrades = dbTrades.map(dbToAppTrade).filter(t => t !== null);
-          setTrades(convertedTrades);
-          console.log(`✅ Loaded ${convertedTrades.length} trades from Supabase`);
-        } else if (error) {
-          console.error('❌ Error loading trades from Supabase:', error);
-        } else {
-          console.log('⚠️ No trades found in Supabase (this is normal if you haven\'t created any yet)');
-        }
-      } else {
-        // Fall back to localStorage if Supabase is not configured
-        const saved = localStorage.getItem('tradingRoom_trades');
-        if (saved) {
-          try {
-            const parsedTrades = JSON.parse(saved);
-            setTrades(parsedTrades);
-            console.log(`📦 Loaded ${parsedTrades.length} trades from localStorage`);
-          } catch (e) {
-            console.error('❌ Error parsing saved trades:', e);
-          }
-        }
-      }
-      setLoading(false);
-    };
+  // Load user-specific data
+  const loadUserData = useCallback(async (userId) => {
+    if (!supabase || !userId) return;
 
-    initializeData();
+    setLoading(true);
+    try {
+      // Load settings (R value and balance)
+      const { data: settings } = await settingsApi.get();
+      if (settings?.r_value) {
+        setRValue(settings.r_value);
+      }
+      if (settings?.balance !== undefined && settings?.balance !== null) {
+        setBalance(settings.balance);
+      }
+      
+      // Load all trades from Supabase
+      const { data: dbTrades, error } = await tradesApi.getAll();
+      if (!error && dbTrades && dbTrades.length > 0) {
+        const convertedTrades = dbTrades.map(dbToAppTrade).filter(t => t !== null);
+        setTrades(convertedTrades);
+        console.log(`✅ Loaded ${convertedTrades.length} trades from Supabase`);
+      } else if (error) {
+        console.error('❌ Error loading trades from Supabase:', error);
+      } else {
+        console.log('⚠️ No trades found in Supabase (this is normal if you haven\'t created any yet)');
+      }
+    } catch (err) {
+      console.error('❌ Error loading user data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Check authentication on mount and listen for auth changes
+  useEffect(() => {
+    if (!supabase) {
+      setAuthLoading(false);
+      return;
+    }
+
+    setSupabaseConnected(true);
+
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setAuthLoading(false);
+      if (currentUser) {
+        loadUserData(currentUser.id);
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        // Reload data when user logs in
+        loadUserData(currentUser.id);
+      } else {
+        // Clear data when user logs out
+        setTrades([]);
+        setRValue(100);
+        setBalance(1000);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadUserData]);
+
+  // Handle successful authentication
+  const handleAuthSuccess = useCallback((session) => {
+    setUser(session?.user ?? null);
   }, []);
 
   // Persist R value
@@ -98,6 +139,116 @@ function App() {
       localStorage.setItem('tradingRoom_trades', JSON.stringify(trades));
     }
   }, [trades, loading]);
+
+  // Add XAUUSDT trade if it doesn't exist (runs after trades are loaded)
+  useEffect(() => {
+    if (loading || xauTradeAddedRef.current) return; // Wait for initial load and only run once
+    
+    const addXAUUSDTTrade = async () => {
+      const symbol = 'XAU/USDT';
+      const openPrice = 4787.21;
+      
+      // Check if trade already exists
+      setTrades(prevTrades => {
+        const exists = prevTrades.some(t => 
+          t.symbol === symbol && 
+          Math.abs(t.openPrice - openPrice) < 0.01 &&
+          t.status === 'open'
+        );
+        
+        if (exists) {
+          xauTradeAddedRef.current = true; // Mark as checked
+          return prevTrades; // Trade already exists
+        }
+        
+        // Mark that we're attempting to add
+        xauTradeAddedRef.current = true;
+        
+        // Calculate trade values
+        const positionSize = 1717.84;
+        const stopLoss = 4765;
+        const takeProfit = 4870;
+        const leverage = 20;
+        const fee = 0.81;
+        
+        // Calculate riskAmount: for long, risk = positionSize * ((openPrice - stopLoss) / openPrice)
+        const stopLossPercent = ((openPrice - stopLoss) / openPrice) * 100;
+        const riskAmount = positionSize * (stopLossPercent / 100);
+        
+        // Get current R value
+        const currentRValue = rValue || parseFloat(localStorage.getItem('tradingRoom_rValue')) || 100;
+        const riskMultiple = currentRValue > 0 ? riskAmount / currentRValue : 1;
+        
+        const newTrade = {
+          id: Date.now(),
+          symbol: symbol,
+          type: 'long',
+          openPrice: openPrice,
+          stopLoss: stopLoss,
+          takeProfit: takeProfit,
+          leverage: leverage,
+          positionSize: positionSize,
+          riskAmount: riskAmount,
+          riskMultiple: riskMultiple,
+          openDate: new Date().toISOString(),
+          status: 'open',
+          fee: fee,
+        };
+        
+        // Add trade to Supabase if connected, otherwise add locally
+        if (supabaseConnected && supabase) {
+          tradesApi.create(newTrade).then(({ data, error }) => {
+            if (!error && data) {
+              setTrades(prev => {
+                // Double-check to avoid duplicates
+                const alreadyExists = prev.some(t => 
+                  t.symbol === symbol && 
+                  Math.abs(t.openPrice - openPrice) < 0.01 &&
+                  t.status === 'open'
+                );
+                if (alreadyExists) return prev;
+                return [dbToAppTrade(data), ...prev];
+              });
+              console.log('✅ XAUUSDT trade added to Supabase:', data?.id);
+            } else {
+              console.error('❌ Error adding XAUUSDT trade:', error);
+              // Fallback: add locally
+              setTrades(prev => {
+                const alreadyExists = prev.some(t => 
+                  t.symbol === symbol && 
+                  Math.abs(t.openPrice - openPrice) < 0.01 &&
+                  t.status === 'open'
+                );
+                if (alreadyExists) return prev;
+                return [newTrade, ...prev];
+              });
+            }
+          }).catch(err => {
+            console.error('❌ Exception adding XAUUSDT trade:', err);
+            // Fallback: add locally
+            setTrades(prev => {
+              const alreadyExists = prev.some(t => 
+                t.symbol === symbol && 
+                Math.abs(t.openPrice - openPrice) < 0.01 &&
+                t.status === 'open'
+              );
+              if (alreadyExists) return prev;
+              return [newTrade, ...prev];
+            });
+          });
+        } else {
+          // No Supabase, add locally
+        }
+        
+        // Return updated trades with new trade (local addition)
+        return [newTrade, ...prevTrades];
+      });
+    };
+    
+    // Small delay to ensure state is ready
+    const timer = setTimeout(addXAUUSDTTrade, 500);
+    return () => clearTimeout(timer);
+  }, [loading, rValue, supabaseConnected]);
 
   // Handle new trade
   const handleNewTrade = useCallback(async (trade) => {
@@ -246,12 +397,44 @@ function App() {
 
   const openTrades = trades.filter(t => t.status === 'open');
 
-  if (loading) {
+  // Calculate unrealized P&L from open trades
+  const { totalUnrealizedPnL } = useUnrealizedPnL(openTrades);
+
+  // Calculate displayed balance (base balance + unrealized P&L)
+  const displayedBalance = useMemo(() => {
+    return balance + totalUnrealizedPnL;
+  }, [balance, totalUnrealizedPnL]);
+
+  // Handle balance change - convert displayed balance back to base balance
+  const handleBalanceChange = useCallback((newDisplayedBalance) => {
+    // When user edits the displayed balance, convert it to base balance
+    // by subtracting unrealized P&L
+    const newBaseBalance = newDisplayedBalance - totalUnrealizedPnL;
+    setBalance(newBaseBalance);
+  }, [totalUnrealizedPnL]);
+
+  // Show auth screen if not authenticated
+  if (authLoading) {
     return (
       <div className="app loading-screen">
         <div className="loader">
           <div className="spinner"></div>
           <p>Loading TradingRoom...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loader">
+          <div className="spinner"></div>
+          <p>Loading your trades...</p>
         </div>
       </div>
     );
@@ -265,9 +448,15 @@ function App() {
         <Header 
           rValue={rValue} 
           onRValueChange={setRValue}
-          balance={balance}
-          onBalanceChange={setBalance}
+          balance={displayedBalance}
+          onBalanceChange={handleBalanceChange}
           supabaseConnected={supabaseConnected}
+          user={user}
+          onLogout={async () => {
+            if (supabase) {
+              await supabase.auth.signOut();
+            }
+          }}
         />
 
         {/* Connection Warning */}
@@ -293,6 +482,15 @@ function App() {
             {openTrades.length > 0 && (
               <span className="tab-badge">{openTrades.length}</span>
             )}
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'balance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('balance')}
+          >
+            <span className="tab-icon">
+              <Wallet size={18} />
+            </span>
+            <span className="tab-label">Balance</span>
           </button>
           <button
             className={`nav-tab ${activeTab === 'trade' ? 'active' : ''}`}
@@ -334,6 +532,12 @@ function App() {
                 onUpdateTrade={handleUpdateTrade}
                 initialBalance={balance}
               />
+            </div>
+          )}
+
+          {activeTab === 'balance' && (
+            <div className="balance-layout animate-fadeIn">
+              <Balance initialBalance={balance} />
             </div>
           )}
 

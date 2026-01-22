@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { TrendingUp, Database } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Database, LogOut, User } from 'lucide-react';
 import './Header.css';
 
 const Header = ({ 
@@ -7,12 +7,28 @@ const Header = ({
   onRValueChange, 
   balance, 
   onBalanceChange, 
-  supabaseConnected
+  supabaseConnected,
+  user,
+  onLogout
 }) => {
   const [isEditingR, setIsEditingR] = useState(false);
   const [tempRValue, setTempRValue] = useState(rValue);
   const [isEditingBalance, setIsEditingBalance] = useState(false);
   const [tempBalance, setTempBalance] = useState(balance);
+
+  // Update tempBalance when balance changes (if not editing)
+  useEffect(() => {
+    if (!isEditingBalance) {
+      setTempBalance(balance);
+    }
+  }, [balance, isEditingBalance]);
+
+  // Update tempRValue when rValue changes (if not editing)
+  useEffect(() => {
+    if (!isEditingR) {
+      setTempRValue(rValue);
+    }
+  }, [rValue, isEditingR]);
 
   const handleRSubmit = () => {
     const value = parseFloat(tempRValue);
@@ -68,12 +84,33 @@ const Header = ({
       </div>
       
       <div className="header-controls">
+        {/* User Info */}
+        {user && (
+          <div className="user-info">
+            <div className="user-avatar">
+              {user.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt={user.email} />
+              ) : (
+                <User size={16} />
+              )}
+            </div>
+            <span className="user-email">{user.email}</span>
+          </div>
+        )}
+
         {/* Connection Indicator */}
         {supabaseConnected && (
           <div className="sync-status supabase" title="Supabase Connected">
             <Database size={14} />
             <span className="sync-text">DB Synced</span>
           </div>
+        )}
+
+        {/* Logout Button */}
+        {user && (
+          <button className="logout-button" onClick={onLogout} title="Logout">
+            <LogOut size={16} />
+          </button>
         )}
 
         {/* Balance Display */}

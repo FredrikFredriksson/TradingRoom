@@ -64,13 +64,15 @@
   flex-direction: column;
   background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 16px;
   border: 1px solid rgba(34, 211, 238, 0.18);
   border-left: 3px solid var(--accent-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  min-height: 500px;
+  width: 100%;
 }
 
 .trade-card::after {
@@ -107,7 +109,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.trade-chart-container {
+  margin-bottom: 16px;
+  width: 100%;
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
 }
 
 .trade-symbol {
@@ -155,7 +167,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .detail-row {
@@ -360,5 +373,9 @@
 @media (max-width: 768px) {
   .trade-details {
     grid-template-columns: 1fr;
+  }
+  
+  .trade-chart-container {
+    margin-bottom: 12px;
   }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLivePrice } from '../hooks/useLivePrice';
+import TradePositionChart from './TradePositionChart';
 import './ActiveTrades.css';
 
 const ActiveTrades = ({ trades, onCloseTrade }) => {
@@ -76,6 +77,17 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   {trade.symbol}
                 </div>
                 <span className="trade-leverage">{trade.leverage}x</span>
+              </div>
+              
+              <div className="trade-chart-container">
+                <TradePositionChart
+                  symbol={trade.symbol}
+                  entryPrice={trade.openPrice}
+                  stopLoss={trade.stopLoss}
+                  takeProfit={trade.takeProfit}
+                  type={trade.type}
+                  height={320}
+                />
               </div>
               
               <div className="trade-details">

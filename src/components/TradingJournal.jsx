@@ -41,6 +41,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import PerformanceTearsheet from './PerformanceTearsheet';
+import TradePositionChart from './TradePositionChart';
 import './TradingJournal.css';
 
 const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateTrade, initialBalance = 1000 }) => {
@@ -470,6 +471,17 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                     </div>
 
                     <div className="trade-card-body">
+                      <div className="trade-chart-container">
+                        <TradePositionChart
+                          symbol={trade.symbol}
+                          entryPrice={trade.openPrice}
+                          stopLoss={trade.stopLoss}
+                          takeProfit={trade.takeProfit}
+                          type={trade.type}
+                          height={380}
+                        />
+                      </div>
+                      
                       <div className="trade-price-row">
                         <div className="price-item">
                           <span className="price-label">Entry</span>

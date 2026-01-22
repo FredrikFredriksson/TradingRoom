@@ -240,7 +240,25 @@ export async function fetchKlines(symbol, interval = '15m', limit = 500) {
     const response = await fetch(
       `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
     );
+    
+    if (!response.ok) {
+      console.error(`Binance API error for ${symbol}: ${response.status} ${response.statusText}`);
+      return [];
+    }
+    
     const data = await response.json();
+    
+    // Check if Binance returned an error object
+    if (data.code || data.msg) {
+      console.error(`Binance API error for ${symbol}:`, data.msg || data.code);
+      return [];
+    }
+    
+    // Ensure data is an array
+    if (!Array.isArray(data)) {
+      console.error(`Invalid data format for ${symbol}:`, data);
+      return [];
+    }
     
     // Transform Binance kline format to our format
     return data.map(kline => ({
@@ -257,7 +275,12 @@ export async function fetchKlines(symbol, interval = '15m', limit = 500) {
       takerBuyQuoteVolume: parseFloat(kline[10]),
     }));
   } catch (error) {
-    console.error(`Error fetching klines for ${symbol}:`, error);
+    // CORS or network errors
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error(`CORS/Network error fetching klines for ${symbol}. This may be a browser security restriction.`);
+    } else {
+      console.error(`Error fetching klines for ${symbol}:`, error);
+    }
     return [];
   }
 }
