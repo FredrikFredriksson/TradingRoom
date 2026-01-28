@@ -549,6 +549,7 @@ function App() {
                 <ActiveTrades 
                   trades={trades} 
                   onCloseTrade={handleCloseTrade}
+                  onDeleteTrade={handleDeleteTrade}
                 />
               </aside>
             </div>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useLivePrice } from '../hooks/useLivePrice';
 import TradePositionChart from './TradePositionChart';
+import { Trash2, X } from 'lucide-react';
 import './ActiveTrades.css';
 
-const ActiveTrades = ({ trades, onCloseTrade }) => {
+const ActiveTrades = ({ trades, onCloseTrade, onDeleteTrade }) => {
   const [closingTrade, setClosingTrade] = useState(null);
   const [closePrice, setClosePrice] = useState('');
   const [closeComment, setCloseComment] = useState('');
@@ -160,12 +161,27 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   </div>
                 </div>
               ) : (
-                <button 
-                  className="close-trade-btn"
-                  onClick={() => handleCloseClick(trade)}
-                >
-                  Close
-                </button>
+                <div className="trade-actions">
+                  <button 
+                    className="close-trade-btn"
+                    onClick={() => handleCloseClick(trade)}
+                  >
+                    Close
+                  </button>
+                  {onDeleteTrade && (
+                    <button 
+                      className="delete-trade-btn"
+                      onClick={() => {
+                        if (confirm(`Delete trade for ${trade.symbol}? This cannot be undone.`)) {
+                          onDeleteTrade(trade.id);
+                        }
+                      }}
+                      title="Delete trade"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               )}
 
               <div className="trade-date">
