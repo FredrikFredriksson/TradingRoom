@@ -23,6 +23,12 @@
   gap: 10px;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .r-info {
   display: flex;
   align-items: center;
@@ -43,6 +49,37 @@
   color: var(--accent-primary);
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
+}
+
+.toggle-dollars-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.05);
+  color: var(--accent-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-dollars-btn:hover {
+  background: linear-gradient(145deg, #0f1a2e 0%, #0a1220 50%, #040810 100%);
+  border-color: rgba(34, 211, 238, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.08);
+  transform: translateY(-1px);
+}
+
+.toggle-dollars-btn:active {
+  transform: translateY(0);
 }
 
 /* Main Tabs */

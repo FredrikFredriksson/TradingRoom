@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { LayoutDashboard, Zap, AlertTriangle, Wallet } from 'lucide-react';
+import { LayoutDashboard, Zap, AlertTriangle, Wallet, BarChart3 } from 'lucide-react';
 import Header from './components/Header';
 import PositionSizer from './components/PositionSizer';
 import ActiveTrades from './components/ActiveTrades';
 import TradingJournal from './components/TradingJournal';
 import Balance from './components/Balance';
 import Auth from './components/Auth';
-// import Analytics from './components/Analytics';
+import Analytics from './components/Analytics';
 import { supabase, tradesApi, settingsApi, dbToAppTrade } from './lib/supabase';
 import { useUnrealizedPnL } from './hooks/useUnrealizedPnL';
 import './App.css';
@@ -34,7 +34,7 @@ function App() {
   const [supabaseConnected, setSupabaseConnected] = useState(false);
   const xauTradeAddedRef = useRef(false);
 
-  // Active tab (Analytics commented out for now: 'analytics' | 'dashboard' | 'balance' | 'trade')
+  // Active tab: 'analytics' | 'dashboard' | 'balance' | 'trade'
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Load user-specific data
@@ -469,7 +469,7 @@ function App() {
           </div>
         )}
 
-        {/* Main Navigation Tabs (Analytics commented out) */}
+        {/* Main Navigation Tabs */}
         <nav className="main-nav glass-card">
           <button
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -482,6 +482,13 @@ function App() {
             {openTrades.length > 0 && (
               <span className="tab-badge">{openTrades.length}</span>
             )}
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <span className="tab-icon"><BarChart3 size={18} /></span>
+            <span className="tab-label">Analytics</span>
           </button>
           <button
             className={`nav-tab ${activeTab === 'balance' ? 'active' : ''}`}
@@ -501,26 +508,15 @@ function App() {
             </span>
             <span className="tab-label">Place Trade</span>
           </button>
-          {/* Analytics tab – commented out
-          <button
-            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            <span className="tab-icon"><BarChart3 size={18} /></span>
-            <span className="tab-label">Analytics</span>
-          </button>
-          */}
         </nav>
 
         {/* Tab Content */}
         <main className="main-content">
-          {/* Analytics – commented out
           {activeTab === 'analytics' && (
             <div className="analytics-layout animate-fadeIn">
               <Analytics />
             </div>
           )}
-          */}
 
           {activeTab === 'dashboard' && (
             <div className="dashboard-layout animate-fadeIn">

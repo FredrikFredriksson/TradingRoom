@@ -78,6 +78,17 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
 
+  // Toggle to hide/show dollar amounts
+  const [hideDollars, setHideDollars] = useState(() => {
+    const saved = localStorage.getItem('tradingRoom_hideDollars');
+    return saved === 'true';
+  });
+
+  // Persist hideDollars preference
+  useEffect(() => {
+    localStorage.setItem('tradingRoom_hideDollars', hideDollars.toString());
+  }, [hideDollars]);
+
   // Split trades
   const openTrades = trades.filter(t => t.status === 'open');
   const closedTrades = trades.filter(t => t.status === 'closed');
@@ -172,6 +183,41 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
     });
   }, [filteredTrades, sortBy, sortOrder]);
 
+  // Calculate balance at start of selected period for PnL % calculation
+  const balanceAtPeriodStart = useMemo(() => {
+    if (viewMode === 'all') {
+      // For all time, calculate initial balance
+      const totalPnL = closedTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
+      const calculatedInitialBalance = initialBalance - totalPnL;
+      return calculatedInitialBalance > 0 ? calculatedInitialBalance : initialBalance;
+    }
+
+    let periodStart;
+    if (viewMode === 'month') {
+      periodStart = startOfMonth(selectedMonth);
+    } else {
+      periodStart = parseISO(dateRange.start);
+    }
+
+    // Get all trades that closed before the period start
+    const tradesBeforePeriod = closedTrades.filter(trade => {
+      if (!trade.closeDate) return false;
+      try {
+        const tradeDate = parseISO(trade.closeDate);
+        if (isNaN(tradeDate.getTime())) return false;
+        return tradeDate < periodStart;
+      } catch {
+        return false;
+      }
+    });
+
+    // Calculate balance at period start
+    const pnlBeforePeriod = tradesBeforePeriod.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
+    const calculatedInitialBalance = initialBalance - closedTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
+    const baseBalance = calculatedInitialBalance > 0 ? calculatedInitialBalance : initialBalance;
+    return baseBalance + pnlBeforePeriod;
+  }, [closedTrades, initialBalance, viewMode, selectedMonth, dateRange]);
+
   // Calculate statistics for filtered trades
   const stats = useMemo(() => {
     const wins = filteredTrades.filter(t => (t.pnlDollar || 0) >= 0);
@@ -179,6 +225,11 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
     
     const totalPnL = filteredTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
     const totalR = filteredTrades.reduce((sum, t) => sum + (t.rResult || 0), 0);
+    
+    // Calculate Total PnL % for the period
+    const totalPnLPercent = balanceAtPeriodStart > 0 
+      ? (totalPnL / balanceAtPeriodStart) * 100 
+      : 0;
     
     const avgWinDollar = wins.length > 0 
       ? wins.reduce((sum, t) => sum + (t.pnlDollar || 0), 0) / wins.length 
@@ -211,6 +262,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
       losingTrades: losses.length,
       winRate: filteredTrades.length > 0 ? (wins.length / filteredTrades.length) * 100 : 0,
       totalPnL,
+      totalPnLPercent,
       totalR,
       avgWinDollar,
       avgWinR,
@@ -220,7 +272,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
       largestLoss,
       profitFactor,
     };
-  }, [filteredTrades]);
+  }, [filteredTrades, balanceAtPeriodStart]);
 
   // Calculate daily PnL for calendar view
   const dailyPnL = useMemo(() => {
@@ -357,6 +409,11 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
     return `${prefix}$${value.toFixed(2)}`;
   };
 
+  const formatPercent = (value) => {
+    const prefix = value >= 0 ? '+' : '';
+    return `${prefix}${value.toFixed(2)}%`;
+  };
+
   const formatR = (value) => {
     const prefix = value >= 0 ? '+' : '';
     return `${prefix}${value.toFixed(2)}R`;
@@ -408,9 +465,18 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
           <BarChart3 size={24} />
           Trading Dashboard
         </h2>
-        <div className="r-info">
-          <span className="r-label">1R =</span>
-          <span className="r-value">${rValue}</span>
+        <div className="header-controls">
+          <div className="r-info">
+            <span className="r-label">1R =</span>
+            <span className="r-value">{hideDollars ? `${rValue.toFixed(2)}R` : `$${rValue}`}</span>
+          </div>
+          <button 
+            className="toggle-dollars-btn"
+            onClick={() => setHideDollars(!hideDollars)}
+            title={hideDollars ? "Show dollar amounts" : "Hide dollar amounts (show only % and R)"}
+          >
+            {hideDollars ? '%' : '$'}
+          </button>
         </div>
       </div>
 
@@ -485,16 +551,16 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                       <div className="trade-price-row">
                         <div className="price-item">
                           <span className="price-label">Entry</span>
-                          <span className="price-value">${trade.openPrice.toLocaleString()}</span>
+                          <span className="price-value">{hideDollars ? trade.openPrice.toLocaleString() : `$${trade.openPrice.toLocaleString()}`}</span>
                         </div>
                         <div className="price-item">
                           <span className="price-label">Stop Loss</span>
-                          <span className="price-value danger">${trade.stopLoss.toLocaleString()}</span>
+                          <span className="price-value danger">{hideDollars ? trade.stopLoss.toLocaleString() : `$${trade.stopLoss.toLocaleString()}`}</span>
                         </div>
                         {trade.takeProfit && (
                           <div className="price-item">
                             <span className="price-label">Take Profit</span>
-                            <span className="price-value success">${trade.takeProfit.toLocaleString()}</span>
+                            <span className="price-value success">{hideDollars ? trade.takeProfit.toLocaleString() : `$${trade.takeProfit.toLocaleString()}`}</span>
                           </div>
                         )}
                       </div>
@@ -502,15 +568,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                       <div className="trade-info-row">
                         <div className="info-item">
                           <span className="info-label">Size</span>
-                          <span className="info-value">${trade.positionSize.toLocaleString()}</span>
+                          <span className="info-value">{hideDollars ? trade.positionSize.toLocaleString() : `$${trade.positionSize.toLocaleString()}`}</span>
                         </div>
                         <div className="info-item">
                           <span className="info-label">Risk</span>
-                          <span className="info-value warning">${trade.riskAmount.toFixed(2)}</span>
+                          <span className="info-value warning">{hideDollars ? `${trade.riskMultiple.toFixed(2)}R` : `$${trade.riskAmount.toFixed(2)}`}</span>
                         </div>
                         {onUpdateTrade && (
                           <div className="info-item">
-                            <span className="info-label">Fee ($)</span>
+                            <span className="info-label">Fee {hideDollars ? '' : '($)'}</span>
                             <input
                               type="number"
                               className="fee-input-inline"
@@ -553,8 +619,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                           />
                           {pnl && (
                             <div className={`pnl-preview ${pnl.pnlDollar >= 0 ? 'positive' : 'negative'}`}>
-                              {pnl.pnlDollar >= 0 ? '+' : ''}{pnl.pnlPercent.toFixed(2)}% 
-                              (${pnl.pnlDollar >= 0 ? '+' : ''}{pnl.pnlDollar.toFixed(2)})
+                              {hideDollars 
+                                ? `${formatPercent(pnl.pnlPercent)}`
+                                : `${formatPercent(pnl.pnlPercent)} (${formatCurrency(pnl.pnlDollar)})`}
                             </div>
                           )}
                           <div className="close-actions">
@@ -651,8 +718,12 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
             <div className="stats-row main-stats">
               <div className={`stat-card large ${stats.totalPnL >= 0 ? 'positive' : 'negative'}`}>
                 <span className="stat-label">Total P&L</span>
-                <span className="stat-value">{formatCurrency(stats.totalPnL)}</span>
-                <span className="stat-sub">{formatR(stats.totalR)}</span>
+                <span className="stat-value">
+                  {hideDollars ? formatR(stats.totalR) : formatCurrency(stats.totalPnL)}
+                </span>
+                <span className="stat-sub">
+                  {hideDollars ? formatPercent(stats.totalPnLPercent) : formatR(stats.totalR)}
+                </span>
               </div>
               
               <div className={`stat-card large ${stats.winRate >= 50 ? 'positive' : 'negative'}`}>
@@ -670,24 +741,57 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
             <div className="stats-row secondary-stats">
               <div className="stat-card">
                 <span className="stat-label">Avg Win</span>
-                <span className="stat-value positive">{formatCurrency(stats.avgWinDollar)}</span>
-                <span className="stat-sub positive">{formatR(stats.avgWinR)}</span>
+                {hideDollars ? (
+                  <>
+                    <span className="stat-value positive">{formatR(stats.avgWinR)}</span>
+                    <span className="stat-sub positive">
+                      {stats.avgWinDollar > 0 && balanceAtPeriodStart > 0 
+                        ? formatPercent((stats.avgWinDollar / balanceAtPeriodStart) * 100)
+                        : '—'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="stat-value positive">{formatCurrency(stats.avgWinDollar)}</span>
+                    <span className="stat-sub positive">{formatR(stats.avgWinR)}</span>
+                  </>
+                )}
               </div>
               
-              <div className="stat-card">
-                <span className="stat-label">Avg Loss</span>
-                <span className="stat-value negative">{formatCurrency(stats.avgLossDollar)}</span>
-                <span className="stat-sub negative">{formatR(stats.avgLossR)}</span>
+              <div className={`stat-card ${stats.totalPnLPercent >= 0 ? 'positive' : 'negative'}`}>
+                <span className="stat-label">Total P&L %</span>
+                <span className={`stat-value ${stats.totalPnLPercent >= 0 ? 'positive' : 'negative'}`}>
+                  {formatPercent(stats.totalPnLPercent)}
+                </span>
+                <span className="stat-sub">
+                  {hideDollars ? formatR(stats.totalR) : `${formatCurrency(stats.totalPnL)} • ${formatR(stats.totalR)}`}
+                </span>
               </div>
               
               <div className="stat-card">
                 <span className="stat-label">Largest Win</span>
-                <span className="stat-value positive">{formatCurrency(stats.largestWin)}</span>
+                {hideDollars ? (
+                  <span className="stat-value positive">
+                    {stats.largestWin > 0 && balanceAtPeriodStart > 0 
+                      ? formatPercent((stats.largestWin / balanceAtPeriodStart) * 100)
+                      : '—'}
+                  </span>
+                ) : (
+                  <span className="stat-value positive">{formatCurrency(stats.largestWin)}</span>
+                )}
               </div>
               
               <div className="stat-card">
                 <span className="stat-label">Largest Loss</span>
-                <span className="stat-value negative">{formatCurrency(stats.largestLoss)}</span>
+                {hideDollars ? (
+                  <span className="stat-value negative">
+                    {stats.largestLoss < 0 && balanceAtPeriodStart > 0 
+                      ? formatPercent((stats.largestLoss / balanceAtPeriodStart) * 100)
+                      : '—'}
+                  </span>
+                ) : (
+                  <span className="stat-value negative">{formatCurrency(stats.largestLoss)}</span>
+                )}
               </div>
               
               <div className="stat-card">
@@ -729,7 +833,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                       <span className="month-label">{format(summary.month, 'MMM')}</span>
                       {summary.trades > 0 && (
                         <span className={`month-pnl ${summary.pnl >= 0 ? 'positive' : 'negative'}`}>
-                          {formatCurrency(summary.pnl)}
+                          {hideDollars ? formatR(summary.rTotal) : formatCurrency(summary.pnl)}
                         </span>
                       )}
                     </div>
@@ -787,7 +891,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                           <div className="calendar-day-number">{format(day, 'd')}</div>
                           {dayData.pnl !== 0 && (
                             <div className={`calendar-day-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}`}>
-                              {formatCurrency(dayData.pnl)}
+                              {hideDollars ? formatR(dayData.rTotal) : formatCurrency(dayData.pnl)}
                             </div>
                           )}
                           {dayData.trades.length > 0 && (
@@ -801,7 +905,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                               <div className="tooltip-header">
                                 <strong>{format(day, 'MMM d, yyyy')}</strong>
                                 <div className={`tooltip-pnl ${dayData.pnl >= 0 ? 'positive' : 'negative'}`}>
-                                  {formatCurrency(dayData.pnl)} ({formatR(dayData.rTotal)})
+                                  {hideDollars 
+                                    ? `${formatR(dayData.rTotal)}${dayData.pnl !== 0 && balanceAtPeriodStart > 0 ? ` • ${formatPercent((dayData.pnl / balanceAtPeriodStart) * 100)}` : ''}`
+                                    : `${formatCurrency(dayData.pnl)} (${formatR(dayData.rTotal)})`}
                                 </div>
                               </div>
                               <div className="tooltip-trades">
@@ -812,7 +918,9 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                                     </span>
                                     <span className="tooltip-trade-symbol">{trade.symbol}</span>
                                     <span className={`tooltip-trade-pnl ${(trade.pnlDollar || 0) >= 0 ? 'positive' : 'negative'}`}>
-                                      {formatCurrency(trade.pnlDollar || 0)}
+                                      {hideDollars 
+                                        ? `${formatR(trade.rResult || 0)}${(trade.pnlPercent || 0) !== 0 ? ` • ${formatPercent(trade.pnlPercent || 0)}` : ''}`
+                                        : formatCurrency(trade.pnlDollar || 0)}
                                     </span>
                                   </div>
                                 ))}
@@ -860,7 +968,15 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                         borderRadius: 'var(--radius-md)',
                         color: 'var(--text-primary)'
                       }}
-                      formatter={(value) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Balance']}
+                      formatter={(value) => {
+                        if (hideDollars && chartData.length > 0) {
+                          // Show as percentage of initial balance
+                          const startBalance = chartData[0].balance;
+                          const percent = startBalance > 0 ? ((value - startBalance) / startBalance) * 100 : 0;
+                          return [`${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`, 'Balance %'];
+                        }
+                        return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Balance'];
+                      }}
                     />
                     <Area 
                       type="monotone" 
@@ -1055,22 +1171,33 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                       {trade.type.toUpperCase()}
                     </span>
                     <span className="cell-price">
-                      ${parseFloat(trade.openPrice).toLocaleString()}
+                      {hideDollars ? parseFloat(trade.openPrice).toLocaleString() : `$${parseFloat(trade.openPrice).toLocaleString()}`}
                     </span>
                     <span className="cell-price">
-                      ${parseFloat(trade.closePrice).toLocaleString()}
+                      {hideDollars ? parseFloat(trade.closePrice).toLocaleString() : `$${parseFloat(trade.closePrice).toLocaleString()}`}
                     </span>
                     <span className={`cell-pnl ${(trade.pnlDollar || 0) >= 0 ? 'positive' : 'negative'}`}>
-                      {formatCurrency(trade.pnlDollar || 0)}
-                      <span className="pnl-percent">
-                        ({(trade.pnlPercent || 0) >= 0 ? '+' : ''}{(trade.pnlPercent || 0).toFixed(2)}%)
-                      </span>
+                      {hideDollars ? (
+                        <>
+                          {formatPercent(trade.pnlPercent || 0)}
+                          <span className="pnl-percent">
+                            ({formatR(trade.rResult || 0)})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          {formatCurrency(trade.pnlDollar || 0)}
+                          <span className="pnl-percent">
+                            ({(trade.pnlPercent || 0) >= 0 ? '+' : ''}{(trade.pnlPercent || 0).toFixed(2)}%)
+                          </span>
+                        </>
+                      )}
                     </span>
                     <span className={`cell-r ${(trade.rResult || 0) >= 0 ? 'positive' : 'negative'}`}>
                       {formatR(trade.rResult || 0)}
                     </span>
                     <span className="cell-fee">
-                      ${(trade.fee ?? 0).toFixed(2)}
+                      {hideDollars ? (trade.fee ?? 0).toFixed(2) : `$${(trade.fee ?? 0).toFixed(2)}`}
                     </span>
                     <span className="cell-actions">
                       {onDeleteTrade && (
@@ -1114,32 +1241,42 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
 
             <div className={`modal-pnl-banner ${(selectedTrade.pnlDollar || 0) >= 0 ? 'positive' : 'negative'}`}>
               <div className="pnl-main">
-                {formatCurrency(selectedTrade.pnlDollar || 0)}
+                {hideDollars 
+                  ? formatPercent(selectedTrade.pnlPercent || 0)
+                  : formatCurrency(selectedTrade.pnlDollar || 0)}
               </div>
               <div className="pnl-details">
-                <span>{formatR(selectedTrade.rResult || 0)}</span>
-                <span>•</span>
-                <span>{(selectedTrade.pnlPercent || 0) >= 0 ? '+' : ''}{(selectedTrade.pnlPercent || 0).toFixed(2)}%</span>
+                {hideDollars ? (
+                  <span>{formatR(selectedTrade.rResult || 0)}</span>
+                ) : (
+                  <>
+                    <span>{formatR(selectedTrade.rResult || 0)}</span>
+                    <span>•</span>
+                    <span>{(selectedTrade.pnlPercent || 0) >= 0 ? '+' : ''}{(selectedTrade.pnlPercent || 0).toFixed(2)}%</span>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="modal-details-grid">
               <div className="modal-detail-item">
                 <span className="detail-label">Entry Price</span>
-                <span className="detail-value">${parseFloat(selectedTrade.openPrice).toLocaleString()}</span>
+                <span className="detail-value">{hideDollars ? parseFloat(selectedTrade.openPrice).toLocaleString() : `$${parseFloat(selectedTrade.openPrice).toLocaleString()}`}</span>
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Exit Price</span>
-                <span className="detail-value">${parseFloat(selectedTrade.closePrice).toLocaleString()}</span>
+                <span className="detail-value">{hideDollars ? parseFloat(selectedTrade.closePrice).toLocaleString() : `$${parseFloat(selectedTrade.closePrice).toLocaleString()}`}</span>
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Stop Loss</span>
-                <span className="detail-value negative">${parseFloat(selectedTrade.stopLoss).toLocaleString()}</span>
+                <span className="detail-value negative">{hideDollars ? parseFloat(selectedTrade.stopLoss).toLocaleString() : `$${parseFloat(selectedTrade.stopLoss).toLocaleString()}`}</span>
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Take Profit</span>
                 <span className="detail-value positive">
-                  {selectedTrade.takeProfit ? `$${parseFloat(selectedTrade.takeProfit).toLocaleString()}` : '—'}
+                  {selectedTrade.takeProfit 
+                    ? (hideDollars ? parseFloat(selectedTrade.takeProfit).toLocaleString() : `$${parseFloat(selectedTrade.takeProfit).toLocaleString()}`)
+                    : '—'}
                 </span>
               </div>
               <div className="modal-detail-item">
@@ -1148,18 +1285,18 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Position Size</span>
-                <span className="detail-value">${parseFloat(selectedTrade.positionSize).toLocaleString()}</span>
+                <span className="detail-value">{hideDollars ? parseFloat(selectedTrade.positionSize).toLocaleString() : `$${parseFloat(selectedTrade.positionSize).toLocaleString()}`}</span>
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Risk Amount</span>
-                <span className="detail-value risk">${parseFloat(selectedTrade.riskAmount).toFixed(2)}</span>
+                <span className="detail-value risk">{hideDollars ? `${selectedTrade.riskMultiple.toFixed(2)}R` : `$${parseFloat(selectedTrade.riskAmount).toFixed(2)}`}</span>
               </div>
               <div className="modal-detail-item">
                 <span className="detail-label">Risk Multiple</span>
                 <span className="detail-value">{selectedTrade.riskMultiple}R</span>
               </div>
               <div className="modal-detail-item">
-                <span className="detail-label">Fee ($)</span>
+                <span className="detail-label">Fee {hideDollars ? '' : '($)'}</span>
                 {onUpdateTrade ? (
                   <input
                     type="number"
@@ -1181,7 +1318,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                     min="0"
                   />
                 ) : (
-                  <span className="detail-value">${(selectedTrade.fee ?? 0).toFixed(2)}</span>
+                  <span className="detail-value">{hideDollars ? (selectedTrade.fee ?? 0).toFixed(2) : `$${(selectedTrade.fee ?? 0).toFixed(2)}`}</span>
                 )}
               </div>
             </div>
