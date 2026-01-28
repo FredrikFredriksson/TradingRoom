@@ -634,9 +634,24 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                           </div>
                         </div>
                       ) : (
-                        <button className="btn-close-trade" onClick={() => handleCloseClick(trade)}>
-                          Close
-                        </button>
+                        <div className="footer-actions">
+                          <button className="btn-close-trade" onClick={() => handleCloseClick(trade)}>
+                            Close
+                          </button>
+                          {onDeleteTrade && (
+                            <button 
+                              className="btn-delete-trade"
+                              onClick={() => {
+                                if (confirm(`Delete trade for ${trade.symbol}? This cannot be undone.`)) {
+                                  onDeleteTrade(trade.id);
+                                }
+                              }}
+                              title="Delete trade"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     
