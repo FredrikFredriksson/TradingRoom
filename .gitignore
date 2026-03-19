@@ -31,3 +31,5 @@ chrome-preview-*.png
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env

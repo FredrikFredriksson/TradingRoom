@@ -158,7 +158,11 @@ function App() {
                 <PositionSizer rValue={rValue} onNewTrade={handleNewTrade} />
               </div>
               <aside className="trade-layout-active">
-                <ActiveTrades trades={trades} onCloseTrade={handleCloseTrade} />
+                <ActiveTrades
+                  trades={trades}
+                  onCloseTrade={handleCloseTrade}
+                  onDeleteTrade={handleDeleteTrade}
+                />
               </aside>
             </div>
           )}

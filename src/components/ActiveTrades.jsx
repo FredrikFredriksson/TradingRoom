@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useLivePrice } from '../hooks/useLivePrice';
 import TradePositionChart from './TradePositionChart';
+import { Trash2, X } from 'lucide-react';
 import './ActiveTrades.css';
 
-const ActiveTrades = ({ trades, onCloseTrade }) => {
+const ActiveTrades = ({ trades, onCloseTrade, onDeleteTrade }) => {
   const [closingTrade, setClosingTrade] = useState(null);
   const [closePrice, setClosePrice] = useState('');
   const [closeComment, setCloseComment] = useState('');
   const { price: livePrice, loading: livePriceLoading } = useLivePrice(closingTrade?.symbol || '');
 
-  const activeTrades = trades.filter((trade) => trade.status === 'open');
+  const activeTrades = trades.filter(t => t.status === 'open');
 
   const handleCloseClick = (trade) => {
     setClosingTrade(trade);
@@ -22,7 +23,6 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
       alert('Please enter the closing price');
       return;
     }
-
     onCloseTrade(closingTrade.id, parseFloat(closePrice), closeComment);
     setClosingTrade(null);
     setClosePrice('');
@@ -36,17 +36,17 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
   };
 
   const calculatePnL = (trade) => {
-    if (!closingTrade || closingTrade.id !== trade.id || !closePrice) {
-      return null;
+    // This is just for display with current price input
+    if (!closingTrade || closingTrade.id !== trade.id || !closePrice) return null;
+    
+    const cp = parseFloat(closePrice);
+    let pnlPercent;
+    if (trade.type === 'long') {
+      pnlPercent = ((cp - trade.openPrice) / trade.openPrice) * 100;
+    } else {
+      pnlPercent = ((trade.openPrice - cp) / trade.openPrice) * 100;
     }
-
-    const parsedClosePrice = parseFloat(closePrice);
-    const pnlPercent =
-      trade.type === 'long'
-        ? ((parsedClosePrice - trade.openPrice) / trade.openPrice) * 100
-        : ((trade.openPrice - parsedClosePrice) / trade.openPrice) * 100;
     const pnlDollar = trade.positionSize * (pnlPercent / 100);
-
     return { pnlPercent, pnlDollar };
   };
 
@@ -54,9 +54,9 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
     return (
       <div className="active-trades empty glass-card">
         <div className="empty-state">
-          <span className="empty-icon">TR</span>
+          <span className="empty-icon">📊</span>
           <h3>No Active Trades</h3>
-          <p>Use Trade Studio to add a sample position.</p>
+          <p>Open a trade using the Position Sizer to get started</p>
         </div>
       </div>
     );
@@ -68,19 +68,18 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
       <div className="trades-list">
         {activeTrades.map((trade) => {
           const pnl = calculatePnL(trade);
-
           return (
             <div key={trade.id} className={`trade-card ${trade.type}`}>
               <div className="trade-header">
                 <div className="trade-symbol">
                   <span className={`trade-type-badge ${trade.type}`}>
-                    {trade.type === 'long' ? 'L' : 'S'}
+                    {trade.type === 'long' ? '↑' : '↓'}
                   </span>
                   {trade.symbol}
                 </div>
                 <span className="trade-leverage">{trade.leverage}x</span>
               </div>
-
+              
               <div className="trade-chart-container">
                 <TradePositionChart
                   symbol={trade.symbol}
@@ -91,7 +90,7 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   height={320}
                 />
               </div>
-
+              
               <div className="trade-details">
                 <div className="detail-row">
                   <span className="detail-label">Ent</span>
@@ -109,15 +108,11 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                 )}
                 <div className="detail-row">
                   <span className="detail-label">Size</span>
-                  <span className="detail-value">
-                    ${trade.positionSize.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-                  </span>
+                  <span className="detail-value">${trade.positionSize.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">R</span>
-                  <span className="detail-value risk">
-                    ${trade.riskAmount.toFixed(2)} ({trade.riskMultiple}R)
-                  </span>
+                  <span className="detail-value risk">${trade.riskAmount.toFixed(2)} ({trade.riskMultiple}R)</span>
                 </div>
               </div>
 
@@ -127,7 +122,7 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                     <input
                       type="number"
                       value={closePrice}
-                      onChange={(event) => setClosePrice(event.target.value)}
+                      onChange={(e) => setClosePrice(e.target.value)}
                       placeholder="Exit price"
                       autoFocus
                     />
@@ -139,25 +134,19 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                         disabled={livePriceLoading}
                         title="Use current market price"
                       >
-                        {livePriceLoading
-                          ? '...'
-                          : `$${livePrice.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 8,
-                            })}`}
+                        {livePriceLoading ? '...' : `$${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`}
                       </button>
                     )}
                   </div>
                   {pnl && (
                     <div className={`pnl-preview ${pnl.pnlDollar >= 0 ? 'positive' : 'negative'}`}>
-                      {pnl.pnlDollar >= 0 ? '+' : ''}
-                      {pnl.pnlPercent.toFixed(2)}% ({pnl.pnlDollar >= 0 ? '+' : ''}
-                      {pnl.pnlDollar.toFixed(2)})
+                      {pnl.pnlDollar >= 0 ? '+' : ''}{pnl.pnlPercent.toFixed(2)}% 
+                      (${pnl.pnlDollar >= 0 ? '+' : ''}{pnl.pnlDollar.toFixed(2)})
                     </div>
                   )}
                   <textarea
                     value={closeComment}
-                    onChange={(event) => setCloseComment(event.target.value)}
+                    onChange={(e) => setCloseComment(e.target.value)}
                     placeholder="Comment (optional)"
                     className="close-comment"
                     rows={2}
@@ -172,18 +161,31 @@ const ActiveTrades = ({ trades, onCloseTrade }) => {
                   </div>
                 </div>
               ) : (
-                <button className="close-trade-btn" onClick={() => handleCloseClick(trade)}>
-                  Close
-                </button>
+                <div className="trade-actions">
+                  <button 
+                    className="close-trade-btn"
+                    onClick={() => handleCloseClick(trade)}
+                  >
+                    Close
+                  </button>
+                  {onDeleteTrade && (
+                    <button 
+                      className="delete-trade-btn"
+                      onClick={() => {
+                        if (confirm(`Delete trade for ${trade.symbol}? This cannot be undone.`)) {
+                          onDeleteTrade(trade.id);
+                        }
+                      }}
+                      title="Delete trade"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               )}
 
               <div className="trade-date">
-                {new Date(trade.openDate).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {new Date(trade.openDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           );

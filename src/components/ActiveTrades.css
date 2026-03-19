@@ -225,6 +225,33 @@
   background: rgba(244, 63, 94, 0.06);
 }
 
+.trade-actions {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+}
+
+.delete-trade-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-trade-btn:hover {
+  border-color: rgba(244, 63, 94, 0.4);
+  color: var(--color-danger);
+  background: rgba(244, 63, 94, 0.06);
+}
+
 .close-trade-form {
   display: flex;
   flex-direction: column;
