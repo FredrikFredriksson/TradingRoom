@@ -1,7 +1,7 @@
 {
   "name": "tradingroom-server",
   "version": "1.0.0",
-  "description": "Backend server for TradingRoom - Blofin API integration",
+  "description": "Sanitized Blofin example server for TradingRoom",
   "main": "index.js",
   "type": "module",
   "scripts": {

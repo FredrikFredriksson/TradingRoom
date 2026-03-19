@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+supabase/.temp/
+.chrome-profile-*/
+chrome-preview-*.png
 
 # Editor directories and files
 .vscode/*

@@ -1,176 +1,77 @@
-import { useState, useEffect } from 'react';
-import { TrendingUp, Database, LogOut, User } from 'lucide-react';
+import demoMark from '../assets/tradingroom-mark.svg';
 import './Header.css';
 
-const Header = ({ 
-  rValue, 
-  onRValueChange, 
-  balance, 
-  onBalanceChange, 
-  supabaseConnected,
-  user,
-  onLogout
+const Header = ({
+  title,
+  subtitle,
+  closedTrades,
+  openTrades,
+  winRate,
+  rValue,
+  balance,
 }) => {
-  const [isEditingR, setIsEditingR] = useState(false);
-  const [tempRValue, setTempRValue] = useState(rValue);
-  const [isEditingBalance, setIsEditingBalance] = useState(false);
-  const [tempBalance, setTempBalance] = useState(balance);
-
-  // Update tempBalance when balance changes (if not editing)
-  useEffect(() => {
-    if (!isEditingBalance) {
-      setTempBalance(balance);
-    }
-  }, [balance, isEditingBalance]);
-
-  // Update tempRValue when rValue changes (if not editing)
-  useEffect(() => {
-    if (!isEditingR) {
-      setTempRValue(rValue);
-    }
-  }, [rValue, isEditingR]);
-
-  const handleRSubmit = () => {
-    const value = parseFloat(tempRValue);
-    if (value > 0) {
-      onRValueChange(value);
-    }
-    setIsEditingR(false);
-  };
-
-  const handleBalanceSubmit = () => {
-    const value = parseFloat(tempBalance);
-    if (value >= 0) {
-      onBalanceChange(value);
-    }
-    setIsEditingBalance(false);
-  };
-
-  const handleRKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleRSubmit();
-    }
-    if (e.key === 'Escape') {
-      setTempRValue(rValue);
-      setIsEditingR(false);
-    }
-  };
-
-  const handleBalanceKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleBalanceSubmit();
-    }
-    if (e.key === 'Escape') {
-      setTempBalance(balance);
-      setIsEditingBalance(false);
-    }
-  };
-
-  // Calculate R equivalent
   const balanceInR = rValue > 0 ? (balance / rValue).toFixed(1) : 0;
+
+  const summaryCards = [
+    {
+      label: 'Account Value',
+      value: `$${balance.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      meta: `${balanceInR}R tracked`,
+      tone: 'positive',
+    },
+    {
+      label: 'Risk Unit',
+      value: `$${rValue.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`,
+      meta: 'Fixed demo baseline',
+      tone: 'accent',
+    },
+    {
+      label: 'Closed Trades',
+      value: String(closedTrades),
+      meta: `${winRate.toFixed(0)}% win rate`,
+      tone: 'neutral',
+    },
+    {
+      label: 'Open Trades',
+      value: String(openTrades),
+      meta: 'Live market pricing',
+      tone: 'neutral',
+    },
+  ];
 
   return (
     <header className="header">
       <div className="header-brand">
         <div className="logo">
           <div className="logo-icon">
-            <TrendingUp size={20} />
+            <img src={demoMark} alt="" />
           </div>
           <div className="brand-text">
-            <h1>TradingRoom</h1>
-            <span className="version">v2.0</span>
+            <div className="brand-row">
+              <h1>TradingRoom</h1>
+              <span className="version">{title}</span>
+            </div>
+            <p>{subtitle}</p>
           </div>
         </div>
       </div>
-      
+
       <div className="header-controls">
-        {/* User Info */}
-        {user && (
-          <div className="user-info">
-            <div className="user-avatar">
-              {user.user_metadata?.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt={user.email} />
-              ) : (
-                <User size={16} />
-              )}
+        <div className="demo-pill">Public Demo Dataset</div>
+        <div className="summary-grid">
+          {summaryCards.map((card) => (
+            <div key={card.label} className={`summary-card ${card.tone}`}>
+              <span className="summary-label">{card.label}</span>
+              <strong className="summary-value">{card.value}</strong>
+              <span className="summary-meta">{card.meta}</span>
             </div>
-            <span className="user-email">{user.email}</span>
-          </div>
-        )}
-
-        {/* Connection Indicator */}
-        {supabaseConnected && (
-          <div className="sync-status supabase" title="Supabase Connected">
-            <Database size={14} />
-            <span className="sync-text">DB Synced</span>
-          </div>
-        )}
-
-        {/* Logout Button */}
-        {user && (
-          <button className="logout-button" onClick={onLogout} title="Logout">
-            <LogOut size={16} />
-          </button>
-        )}
-
-        {/* Balance Display */}
-        <div className="balance-config">
-          <span className="config-label">Balance</span>
-          {isEditingBalance ? (
-            <div className="value-edit">
-              <span className="currency">$</span>
-              <input
-                type="number"
-                value={tempBalance}
-                onChange={(e) => setTempBalance(e.target.value)}
-                onBlur={handleBalanceSubmit}
-                onKeyDown={handleBalanceKeyDown}
-                autoFocus
-              />
-            </div>
-          ) : (
-            <button 
-              className="value-btn balance-btn" 
-              onClick={() => {
-                setTempBalance(balance);
-                setIsEditingBalance(true);
-              }}
-            >
-              <span className={`balance-amount ${balance >= 0 ? 'positive' : 'negative'}`}>
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <span className="balance-r">({balanceInR}R)</span>
-            </button>
-          )}
-        </div>
-        
-        {/* Risk Unit Display */}
-        <div className="r-config">
-          <span className="config-label">Risk Unit</span>
-          {isEditingR ? (
-            <div className="value-edit">
-              <span className="currency">$</span>
-              <input
-                type="number"
-                value={tempRValue}
-                onChange={(e) => setTempRValue(e.target.value)}
-                onBlur={handleRSubmit}
-                onKeyDown={handleRKeyDown}
-                autoFocus
-              />
-            </div>
-          ) : (
-            <button 
-              className="value-btn" 
-              onClick={() => {
-                setTempRValue(rValue);
-                setIsEditingR(true);
-              }}
-            >
-              <span className="r-amount">${rValue.toLocaleString()}</span>
-              <span className="r-suffix">= 1R</span>
-            </button>
-          )}
+          ))}
         </div>
       </div>
     </header>

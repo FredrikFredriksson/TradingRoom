@@ -194,8 +194,8 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
       {/* Header */}
       <div className="sizer-header-h">
         <div className="header-left">
-          <h2>Place Trade</h2>
-          <p className="subtitle">Calculate position size and open a trade</p>
+          <h2>Trade Studio</h2>
+          <p className="subtitle">Calculate position size and stage a sample trade</p>
         </div>
         <div className="header-right">
           {symbol && (

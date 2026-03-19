@@ -1,0 +1,92 @@
+.stat-chart-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-chart-svg {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+}
+
+.stat-chart-grid {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.stat-chart-zero {
+  stroke: rgba(148, 163, 184, 0.6);
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+
+.stat-chart-dot {
+  stroke: rgba(5, 10, 18, 0.9);
+  stroke-width: 2;
+}
+
+.stat-chart-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.stat-chart-empty {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.stat-chart-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat-chart-metric {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(15, 26, 46, 0.72);
+  border: 1px solid rgba(34, 211, 238, 0.12);
+}
+
+.stat-chart-metric-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-chart-metric-value {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.stat-chart-metric-value.positive {
+  color: var(--color-success-bright);
+}
+
+.stat-chart-metric-value.negative {
+  color: var(--color-danger-bright);
+}
+
+@media (max-width: 768px) {
+  .stat-chart-meta {
+    grid-template-columns: 1fr;
+  }
+}

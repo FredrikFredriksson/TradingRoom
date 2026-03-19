@@ -12,7 +12,6 @@ import {
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
-  getDay,
 } from 'date-fns';
 import { 
   Target, 
@@ -28,19 +27,8 @@ import {
   BarChart3,
   Check
 } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine
-} from 'recharts';
 import PerformanceTearsheet from './PerformanceTearsheet';
+import { StatLineChart } from './StatCharts';
 import TradePositionChart from './TradePositionChart';
 import './TradingJournal.css';
 
@@ -68,7 +56,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
   const [feeInput, setFeeInput] = useState('');
   useEffect(() => {
     if (selectedTrade) setFeeInput(String(selectedTrade.fee ?? 0));
-  }, [selectedTrade?.id, selectedTrade?.fee]);
+  }, [selectedTrade]);
   
   // Editable fee on active trade cards
   const [editingFeeId, setEditingFeeId] = useState(null);
@@ -113,7 +101,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
         setSelectedMonth(startOfMonth(latest));
       }
     }
-  }, [closedTrades.length]);
+  }, [closedTrades]);
 
   // Filter trades based on view mode
   const filteredTrades = useMemo(() => {
@@ -146,7 +134,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
         const tradeDate = parseISO(trade.closeDate);
         if (isNaN(tradeDate.getTime())) return false; // Invalid date
         return isWithinInterval(tradeDate, { start, end });
-      } catch (e) {
+      } catch {
         return false;
       }
     });
@@ -329,7 +317,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
           const tradeDate = parseISO(trade.closeDate);
           if (isNaN(tradeDate.getTime())) return false; // Invalid date
           return isWithinInterval(tradeDate, { start: monthStart, end: monthEnd });
-        } catch (e) {
+        } catch {
           return false;
         }
       });
@@ -350,55 +338,31 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
     return summaries;
   }, [closedTrades, selectedMonth]);
 
-  // Calculate balance and P&L % history for charts
   const chartData = useMemo(() => {
-    // Sort trades by close date (closed trades should always have closeDate)
-    const sortedTrades = [...closedTrades]
-      .filter(t => t.closeDate) // Only include trades with close dates
-      .sort((a, b) => {
-        const dateA = new Date(a.closeDate);
-        const dateB = new Date(b.closeDate);
-        return dateA - dateB;
-      });
+    const sortedClosedTrades = [...closedTrades]
+      .filter((trade) => trade.closeDate)
+      .sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
 
-    if (sortedTrades.length === 0) return [];
+    if (sortedClosedTrades.length === 0) {
+      return [];
+    }
 
-    // Calculate initial balance by subtracting all P&L from current balance
-    const totalPnL = sortedTrades.reduce((sum, t) => sum + (t.pnlDollar || 0), 0);
-    const calculatedInitialBalance = initialBalance - totalPnL;
-    const startBalance = calculatedInitialBalance > 0 ? calculatedInitialBalance : initialBalance;
-
+    const totalPnL = sortedClosedTrades.reduce((sum, trade) => sum + (trade.pnlDollar || 0), 0);
+    const startBalance = Math.max(initialBalance - totalPnL, 100);
     let runningBalance = startBalance;
-    const data = [];
 
-    // Add initial point
-    const firstTradeDate = new Date(sortedTrades[0].closeDate || sortedTrades[0].openDate);
-    data.push({
-      date: format(firstTradeDate, 'MMM d'),
-      dateFull: firstTradeDate,
-      balance: startBalance,
-      pnlPercent: 0,
-      cumulativePnL: 0,
-    });
-
-    // Add data point for each trade
-    sortedTrades.forEach((trade) => {
-      const tradeDate = new Date(trade.closeDate || trade.openDate);
+    return sortedClosedTrades.map((trade) => {
       const pnlDollar = trade.pnlDollar || 0;
       runningBalance += pnlDollar;
       const cumulativePnL = runningBalance - startBalance;
       const pnlPercent = startBalance > 0 ? (cumulativePnL / startBalance) * 100 : 0;
 
-      data.push({
-        date: format(tradeDate, 'MMM d'),
-        dateFull: tradeDate,
+      return {
+        dateLabel: format(parseISO(trade.closeDate), 'MMM d'),
         balance: runningBalance,
-        pnlPercent: pnlPercent,
-        cumulativePnL: cumulativePnL,
-      });
+        pnlPercent,
+      };
     });
-
-    return data;
   }, [closedTrades, initialBalance]);
 
   const handlePrevMonth = () => setSelectedMonth(prev => subMonths(prev, 1));
@@ -516,7 +480,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
             <div className="empty-state-large">
               <BarChart3 size={48} strokeWidth={1.5} />
               <h3>No Active Trades</h3>
-              <p>Go to "Place Trade" to open a new position</p>
+              <p>Go to "Trade Studio" to open a new position</p>
             </div>
           ) : (
             <div className="active-trades-grid">
@@ -936,105 +900,84 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
             </div>
           )}
 
-          {/* Balance and P&L Charts */}
           {chartData.length > 0 && (
             <div className="charts-section">
-              {/* Balance Chart */}
               <div className="chart-container">
                 <h4 className="chart-title">Account Balance Over Time</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="var(--text-muted)"
-                      style={{ fontSize: '0.75rem' }}
-                    />
-                    <YAxis 
-                      stroke="var(--text-muted)"
-                      style={{ fontSize: '0.75rem' }}
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)'
-                      }}
-                      formatter={(value) => {
-                        if (hideDollars && chartData.length > 0) {
-                          // Show as percentage of initial balance
-                          const startBalance = chartData[0].balance;
-                          const percent = startBalance > 0 ? ((value - startBalance) / startBalance) * 100 : 0;
-                          return [`${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`, 'Balance %'];
-                        }
-                        return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Balance'];
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="balance" 
-                      stroke="var(--accent-primary)" 
-                      strokeWidth={2}
-                      fill="url(#balanceGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="stat-chart-meta">
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Start</span>
+                    <span className="stat-chart-metric-value">
+                      ${chartData[0].balance.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Latest</span>
+                    <span className="stat-chart-metric-value positive">
+                      ${chartData[chartData.length - 1].balance.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Net Return</span>
+                    <span className="stat-chart-metric-value positive">
+                      {formatPercent(chartData[chartData.length - 1].pnlPercent)}
+                    </span>
+                  </div>
+                </div>
+                <StatLineChart
+                  data={chartData}
+                  valueKey="balance"
+                  labelKey="dateLabel"
+                  color="var(--accent-primary)"
+                  area
+                  height={300}
+                />
               </div>
 
-              {/* P&L % Chart */}
               <div className="chart-container">
-                <h4 className="chart-title">P&L % Over Time</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="var(--text-muted)"
-                      style={{ fontSize: '0.75rem' }}
-                    />
-                    <YAxis 
-                      stroke="var(--text-muted)"
-                      style={{ fontSize: '0.75rem' }}
-                      tickFormatter={(value) => `${value.toFixed(1)}%`}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)'
-                      }}
-                      formatter={(value) => [`${value >= 0 ? '+' : ''}${value.toFixed(2)}%`, 'P&L %']}
-                    />
-                    <ReferenceLine 
-                      y={0} 
-                      stroke="var(--text-muted)" 
-                      strokeWidth={1}
-                      strokeDasharray="5 5"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pnlPercent" 
-                      stroke="var(--accent-primary)" 
-                      strokeWidth={2}
-                      dot={{ fill: 'var(--accent-primary)', r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <h4 className="chart-title">P&amp;L % Over Time</h4>
+                <div className="stat-chart-meta">
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Latest</span>
+                    <span
+                      className={`stat-chart-metric-value ${
+                        chartData[chartData.length - 1].pnlPercent >= 0 ? 'positive' : 'negative'
+                      }`}
+                    >
+                      {formatPercent(chartData[chartData.length - 1].pnlPercent)}
+                    </span>
+                  </div>
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Best</span>
+                    <span className="stat-chart-metric-value positive">
+                      {formatPercent(Math.max(...chartData.map((item) => item.pnlPercent)))}
+                    </span>
+                  </div>
+                  <div className="stat-chart-metric">
+                    <span className="stat-chart-metric-label">Worst</span>
+                    <span className="stat-chart-metric-value negative">
+                      {formatPercent(Math.min(...chartData.map((item) => item.pnlPercent)))}
+                    </span>
+                  </div>
+                </div>
+                <StatLineChart
+                  data={chartData}
+                  valueKey="pnlPercent"
+                  labelKey="dateLabel"
+                  color="var(--accent-emerald)"
+                  height={300}
+                  includeZero
+                />
               </div>
             </div>
           )}
 
-          {/* Performance Tearsheet: KPIs, monthly heatmap, equity, drawdown, return distribution */}
           <PerformanceTearsheet closedTrades={closedTrades} initialBalance={initialBalance} />
         </div>
       )}

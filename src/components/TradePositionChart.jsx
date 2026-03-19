@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
 import { fetchKlines, formatSymbolForBinance } from '../lib/binance';
@@ -115,89 +114,89 @@ const TradePositionChart = ({
 
   return (
     <div className="trade-position-chart" style={{ height: `${height}px` }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={priceData}
-          margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-        >
-          <defs>
-            <linearGradient id={`gradient-${type}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
-              <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 211, 238, 0.1)" />
-          <XAxis 
-            dataKey="timestamp"
-            stroke="var(--text-muted)"
-            style={{ fontSize: '0.7rem' }}
-            tick={{ fill: 'var(--text-muted)' }}
-            interval="preserveStartEnd"
-            tickCount={6}
-          />
-          <YAxis 
-            domain={yAxisDomain}
-            stroke="var(--text-muted)"
-            style={{ fontSize: '0.7rem' }}
-            tick={{ fill: 'var(--text-muted)' }}
-            tickFormatter={(value) => {
-              // Format price based on magnitude
-              if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
-              if (value >= 1) return `$${value.toFixed(2)}`;
-              return `$${value.toFixed(4)}`;
-            }}
-            width={60}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'var(--bg-elevated)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '6px 10px',
-            }}
-            labelStyle={{ color: 'var(--text-primary)', fontSize: '0.7rem' }}
-            formatter={(value) => [`$${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`, 'Price']}
-          />
-          
-          {/* Price area */}
-          <Area
-            type="monotone"
-            dataKey="price"
-            stroke={chartColor}
-            strokeWidth={2.5}
-            fill={`url(#gradient-${type})`}
-          />
-          
-          {/* Entry price line */}
+      <AreaChart
+        responsive
+        data={priceData}
+        margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <defs>
+          <linearGradient id={`gradient-${type}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
+            <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 211, 238, 0.1)" />
+        <XAxis 
+          dataKey="timestamp"
+          stroke="var(--text-muted)"
+          style={{ fontSize: '0.7rem' }}
+          tick={{ fill: 'var(--text-muted)' }}
+          interval="preserveStartEnd"
+          tickCount={6}
+        />
+        <YAxis 
+          domain={yAxisDomain}
+          stroke="var(--text-muted)"
+          style={{ fontSize: '0.7rem' }}
+          tick={{ fill: 'var(--text-muted)' }}
+          tickFormatter={(value) => {
+            // Format price based on magnitude
+            if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
+            if (value >= 1) return `$${value.toFixed(2)}`;
+            return `$${value.toFixed(4)}`;
+          }}
+          width={60}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'var(--bg-elevated)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '6px 10px',
+          }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '0.7rem' }}
+          formatter={(value) => [`$${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`, 'Price']}
+        />
+        
+        {/* Price area */}
+        <Area
+          type="monotone"
+          dataKey="price"
+          stroke={chartColor}
+          strokeWidth={2.5}
+          fill={`url(#gradient-${type})`}
+        />
+        
+        {/* Entry price line */}
+        <ReferenceLine
+          y={entryPrice}
+          stroke="var(--accent-primary)"
+          strokeWidth={2.5}
+          strokeDasharray="6 4"
+          opacity={0.9}
+        />
+        
+        {/* Stop Loss line */}
+        <ReferenceLine
+          y={stopLoss}
+          stroke="var(--color-danger)"
+          strokeWidth={2.5}
+          strokeDasharray="6 4"
+          opacity={0.9}
+        />
+        
+        {/* Take Profit line (if exists) */}
+        {takeProfit && (
           <ReferenceLine
-            y={entryPrice}
-            stroke="var(--accent-primary)"
+            y={takeProfit}
+            stroke="var(--color-success)"
             strokeWidth={2.5}
             strokeDasharray="6 4"
             opacity={0.9}
           />
-          
-          {/* Stop Loss line */}
-          <ReferenceLine
-            y={stopLoss}
-            stroke="var(--color-danger)"
-            strokeWidth={2.5}
-            strokeDasharray="6 4"
-            opacity={0.9}
-          />
-          
-          {/* Take Profit line (if exists) */}
-          {takeProfit && (
-            <ReferenceLine
-              y={takeProfit}
-              stroke="var(--color-success)"
-              strokeWidth={2.5}
-              strokeDasharray="6 4"
-              opacity={0.9}
-            />
-          )}
-        </AreaChart>
-      </ResponsiveContainer>
+        )}
+      </AreaChart>
     </div>
   );
 };

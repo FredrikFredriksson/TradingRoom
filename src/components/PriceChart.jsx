@@ -67,11 +67,7 @@ const PriceChart = ({ symbol, height = 150 }) => {
     // Small delay to ensure priceData is set
     const timeoutId = setTimeout(() => {
       wsRef.current = createPriceWebSocket(binanceSymbol, (newPrice) => {
-        // Update current price immediately
-        setCurrentPrice(prev => {
-          // Force update even if price is the same (for display refresh)
-          return newPrice;
-        });
+        setCurrentPrice(newPrice);
         
         // Update the last data point with new price in real-time
         setPriceData(prev => {
@@ -104,7 +100,7 @@ const PriceChart = ({ symbol, height = 150 }) => {
         wsRef.current = null;
       }
     };
-  }, [symbol, loading]); // Only depend on symbol and loading, not priceData.length
+  }, [symbol, loading, priceData.length]);
 
   // Draw chart
   const drawChart = useCallback(() => {

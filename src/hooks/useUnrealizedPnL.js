@@ -89,7 +89,7 @@ export function useUnrealizedPnL(openTrades) {
       });
       wsRefs.current = {};
     };
-  }, [symbolsKey]); // Re-run when symbols change
+  }, [symbolsKey, uniqueSymbols]);
 
   // Calculate total unrealized P&L
   const totalUnrealizedPnL = openTrades.reduce((total, trade) => {
