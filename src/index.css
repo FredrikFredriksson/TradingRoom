@@ -1,5 +1,5 @@
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* CSS Reset & Base Styles */
 *, *::before, *::after {
@@ -12,65 +12,53 @@
 }
 
 :root {
-  /* Dark Blue / Blue-Black Theme */
-  --bg-primary: #050a12;
-  --bg-secondary: #080e1a;
-  --bg-tertiary: #0c1524;
-  --bg-elevated: #0f1a2e;
-  --bg-hover: #131f35;
-  
-  /* Metallic Gradients - dark blue tones */
-  --gradient-metallic: linear-gradient(145deg, #0c1524 0%, #050a12 50%, #03060c 100%);
-  --gradient-card: linear-gradient(165deg, rgba(34, 211, 238, 0.04) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 100%);
-  --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(34, 211, 238, 0.04) 50%, transparent 100%);
-  
-  /* Accent - Light blue (kept as requested) */
-  --accent-primary: #22d3ee;       /* Cyan - Main accent */
-  --accent-secondary: #06b6d4;     /* Darker cyan */
-  --accent-blue: #38bdf8;          /* Sky blue */
-  --accent-emerald: #2dd4bf;       /* Teal - fits blue */
-  --accent-amber: #fbbf24;         /* Amber */
-  
-  /* Metallic Success (green) - shiny, fits blue */
-  --color-success: #2dd4bf;
-  --color-success-bright: #5eead4;
-  --color-success-dark: #14b8a6;
-  --gradient-success: linear-gradient(180deg, #5eead4 0%, #2dd4bf 40%, #14b8a6 100%);
-  
-  /* Metallic Danger (red) - shiny, fits blue scheme */
+  /* Neutral near-black theme */
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f12;
+  --bg-tertiary: #16161a;
+  --bg-elevated: #1c1c22;
+  --bg-hover: #232329;
+
+  /* Accent - Teal */
+  --accent-primary: #2EC4B6;
+  --accent-secondary: #25a99d;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+
+  /* Success */
+  --color-success: #34d399;
+  --color-success-bright: #6ee7b7;
+  --color-success-dark: #10b981;
+
+  /* Danger */
   --color-danger: #f43f5e;
   --color-danger-bright: #fb7185;
   --color-danger-dark: #e11d48;
-  --gradient-danger: linear-gradient(180deg, #fb7185 0%, #f43f5e 40%, #e11d48 100%);
-  
+
   /* Semantic */
   --color-warning: #fbbf24;
-  --color-info: #22d3ee;
-  
-  /* Text Colors */
-  --text-primary: #f0f9ff;
-  --text-secondary: #bae6fd;
-  --text-muted: #94a3b8;
-  
-  /* Border Colors - blue tint */
-  --border-subtle: rgba(34, 211, 238, 0.08);
-  --border-default: rgba(34, 211, 238, 0.12);
-  --border-bright: rgba(34, 211, 238, 0.2);
-  
+  --color-info: #2EC4B6;
+
+  /* Text Colors - neutral */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  /* Border Colors - neutral */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-bright: rgba(255, 255, 255, 0.16);
+
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 21, 41, 0.5);
-  --shadow-lg: 0 8px 30px rgba(0, 21, 41, 0.6);
-  --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.25);
-  --shadow-glow-blue: 0 0 40px rgba(56, 189, 248, 0.25);
-  --shadow-glow-emerald: 0 0 40px rgba(45, 212, 191, 0.25);
-  --shadow-glow-rose: 0 0 40px rgba(244, 63, 94, 0.25);
-  
-  /* Border Radius - Square / minimal */
-  --radius-xs: 0;
-  --radius-sm: 1px;
-  --radius-md: 2px;
-  --radius-lg: 3px;
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
+
+  /* Border Radius - modern rounded */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 html {
@@ -80,7 +68,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -95,12 +83,12 @@ body {
 
 ::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-  border-radius: 0;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
-  border-radius: 0;
+  border-radius: 4px;
   border: 2px solid var(--bg-secondary);
 }
 
@@ -131,7 +119,7 @@ input[type=number] {
 
 /* Selection */
 ::selection {
-  background: rgba(34, 211, 238, 0.3);
+  background: rgba(46, 196, 182, 0.3);
   color: var(--text-primary);
 }
 
@@ -167,50 +155,21 @@ input[type=number] {
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(34, 211, 238, 0.5);
-  }
-}
-
-/* Glass Card – frosted card with gradient, border, top-edge shine */
+/* Glass Card – flat elevated card */
 .glass-card {
   position: relative;
-  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
-  border: 1px solid rgba(34, 211, 238, 0.22);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(186, 230, 253, 0.06);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.25), transparent);
-  pointer-events: none;
-}
-
-/* Glass panel – inset/nested panels, same look without top-edge shine */
+/* Glass panel – inset/nested panels */
 .glass-panel {
-  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
-  border: 1px solid rgba(34, 211, 238, 0.18);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(186, 230, 253, 0.04);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Utility Classes */

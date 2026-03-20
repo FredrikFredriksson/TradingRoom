@@ -3,10 +3,12 @@ import { format } from 'date-fns';
 import { ArrowUp, ArrowDown, Zap, Search } from 'lucide-react';
 import { fetchTradingPairs } from '../lib/binance';
 import { useLivePrice } from '../hooks/useLivePrice';
-import PriceChart from './PriceChart';
 import './PositionSizer.css';
 
-const PositionSizer = ({ rValue, onNewTrade }) => {
+const LEVERAGE_LEVELS = [1, 2, 3, 5, 10, 20, 50, 100];
+const RISK_LEVELS = [0.5, 1, 1.5, 2, 3];
+
+const PositionSizer = ({ rValue, onNewTrade, onSymbolChange }) => {
   const [tradeType, setTradeType] = useState('long');
   const [openPrice, setOpenPrice] = useState('');
   const [stopLoss, setStopLoss] = useState('');
@@ -15,21 +17,17 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
   const [riskMultiple, setRiskMultiple] = useState(1);
   const [symbol, setSymbol] = useState('BTC/USDT');
   const [tradeDate, setTradeDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  
-  // Trading pairs state
+
   const [tradingPairs, setTradingPairs] = useState([]);
   const [filteredPairs, setFilteredPairs] = useState([]);
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
   const [symbolSearch, setSymbolSearch] = useState('');
   const [loadingPairs, setLoadingPairs] = useState(true);
-  const [showChart, setShowChart] = useState(true);
   const symbolInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  
-  // Live price for selected symbol
+
   const { price: livePrice, loading: priceLoading } = useLivePrice(symbol);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -39,19 +37,15 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
         symbolInputRef.current &&
         !symbolInputRef.current.contains(event.target)
       ) {
-        // Use setTimeout to allow dropdown item clicks to process first
-        setTimeout(() => {
-          setShowSymbolDropdown(false);
-        }, 100);
+        setTimeout(() => setShowSymbolDropdown(false), 100);
       }
     };
-
     if (showSymbolDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showSymbolDropdown]);
-  
+
   const [calculations, setCalculations] = useState({
     positionSize: 0,
     riskAmount: 0,
@@ -61,14 +55,13 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     takeProfitPercent: 0,
   });
 
-  // Fetch trading pairs on mount
   useEffect(() => {
     const loadPairs = async () => {
       setLoadingPairs(true);
       try {
         const pairs = await fetchTradingPairs();
         setTradingPairs(pairs);
-        setFilteredPairs(pairs.slice(0, 20)); // Show top 20 initially
+        setFilteredPairs(pairs.slice(0, 20));
       } catch (error) {
         console.error('Error loading trading pairs:', error);
       } finally {
@@ -78,7 +71,10 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     loadPairs();
   }, []);
 
-  // Filter pairs based on search
+  useEffect(() => {
+    if (symbol && onSymbolChange) onSymbolChange(symbol);
+  }, [symbol, onSymbolChange]);
+
   useEffect(() => {
     if (!symbolSearch.trim()) {
       setFilteredPairs(tradingPairs.slice(0, 20));
@@ -98,21 +94,16 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
       const sl = parseFloat(stopLoss);
       const tp = parseFloat(takeProfit) || 0;
       const risk = rValue * riskMultiple;
-      
-      // Calculate stop loss percentage
+
       let stopLossPercent;
       if (tradeType === 'long') {
         stopLossPercent = ((open - sl) / open) * 100;
       } else {
         stopLossPercent = ((sl - open) / open) * 100;
       }
-      
 
-      
-      // Position size = Risk Amount / (Stop Loss % * Leverage adjustment)
       const positionSize = (risk / (stopLossPercent / 100));
-      
-      // Calculate potential profit
+
       let takeProfitPercent = 0;
       let potentialProfit = 0;
       if (tp) {
@@ -123,17 +114,16 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
         }
         potentialProfit = (positionSize * (takeProfitPercent / 100));
       }
-      
-      // Risk reward ratio
+
       const riskRewardRatio = takeProfitPercent > 0 ? takeProfitPercent / stopLossPercent : 0;
-      
+
       setCalculations({
-        positionSize: positionSize,
+        positionSize,
         riskAmount: risk,
-        potentialProfit: potentialProfit,
-        riskRewardRatio: riskRewardRatio,
-        stopLossPercent: stopLossPercent,
-        takeProfitPercent: takeProfitPercent,
+        potentialProfit,
+        riskRewardRatio,
+        stopLossPercent,
+        takeProfitPercent,
       });
     } else {
       setCalculations({
@@ -150,7 +140,6 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
   const handleSymbolSelect = (selectedPair) => {
     setSymbol(selectedPair.displaySymbol);
     setSymbolSearch('');
-    // Close dropdown immediately
     setShowSymbolDropdown(false);
   };
 
@@ -170,18 +159,16 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
       openPrice: parseFloat(openPrice),
       stopLoss: parseFloat(stopLoss),
       takeProfit: parseFloat(takeProfit) || null,
-      leverage: leverage,
+      leverage,
       positionSize: calculations.positionSize,
       riskAmount: calculations.riskAmount,
-      riskMultiple: riskMultiple,
+      riskMultiple,
       openDate: selectedDate.toISOString(),
       status: 'open',
       fee: 0,
     };
 
     onNewTrade(trade);
-    
-    // Reset form
     setSymbol('');
     setOpenPrice('');
     setStopLoss('');
@@ -189,252 +176,237 @@ const PositionSizer = ({ rValue, onNewTrade }) => {
     setRiskMultiple(1);
   };
 
+  const leverageIndex = Math.max(0, LEVERAGE_LEVELS.indexOf(leverage));
+  const leverageProgress = (leverageIndex / (LEVERAGE_LEVELS.length - 1)) * 100;
+
+  const riskIndex = Math.max(0, RISK_LEVELS.indexOf(riskMultiple));
+  const riskProgress = (riskIndex / (RISK_LEVELS.length - 1)) * 100;
+
   return (
     <div className="position-sizer-h glass-card">
       {/* Header */}
-      <div className="sizer-header-h">
-        <div className="header-left">
-          <h2>Trade Studio</h2>
-          <p className="subtitle">Calculate position size and stage a sample trade</p>
-        </div>
-        <div className="header-right">
-          {symbol && (
-            <button
-              className="chart-toggle-btn"
-              onClick={() => setShowChart(!showChart)}
-              title={showChart ? 'Hide chart' : 'Show chart'}
-            >
-              {showChart ? 'Hide Chart' : 'Show Chart'}
-            </button>
-          )}
-          <div className="risk-badge">
-            <span className="risk-label">Risking</span>
-            <span className="risk-amount">${(rValue * riskMultiple).toFixed(2)}</span>
-            <span className="risk-r">{riskMultiple}R</span>
-          </div>
+      <div className="ps-header">
+        <h2 className="ps-title">Place Order</h2>
+        <div className="risk-badge">
+          <span className="risk-label">Risking</span>
+          <span className="risk-amount">${(rValue * riskMultiple).toFixed(2)}</span>
+          <span className="risk-r">{riskMultiple}R</span>
         </div>
       </div>
-
-      {/* Price Chart - Toggleable */}
-      {showChart && symbol && (
-        <div className="chart-section">
-          <PriceChart symbol={symbol} height={150} />
-        </div>
-      )}
 
       {/* Trade Type Toggle */}
-      <div className="trade-type-h">
-        <button 
-          className={`type-btn-h long ${tradeType === 'long' ? 'active' : ''}`}
+      <div className="ps-type-toggle">
+        <button
+          className={`ps-type-btn long ${tradeType === 'long' ? 'active' : ''}`}
           onClick={() => setTradeType('long')}
         >
-          <ArrowUp size={18} strokeWidth={3} />
-          <span className="type-text">LONG</span>
+          <ArrowUp size={15} strokeWidth={3} />
+          LONG
         </button>
-        <button 
-          className={`type-btn-h short ${tradeType === 'short' ? 'active' : ''}`}
+        <button
+          className={`ps-type-btn short ${tradeType === 'short' ? 'active' : ''}`}
           onClick={() => setTradeType('short')}
         >
-          <ArrowDown size={18} strokeWidth={3} />
-          <span className="type-text">SHORT</span>
+          <ArrowDown size={15} strokeWidth={3} />
+          SHORT
         </button>
       </div>
 
-      {/* Main Form - Horizontal Layout */}
-      <div className="form-grid-h">
-        {/* Row 1 - Basic Info */}
-        <div className="form-section">
-          <h4 className="section-title">Trade Info</h4>
-          <div className="input-row-h">
-            <div className="input-group-h symbol-input-group">
-              <label>Symbol</label>
-              <div className="symbol-input-wrapper">
-                <Search size={16} className="search-icon" />
-                <input
-                  ref={symbolInputRef}
-                  type="text"
-                  value={symbolSearch || symbol}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setSymbolSearch(value);
-                    // If user types a valid format, set symbol
-                    if (value && value.length >= 2) {
-                      // Convert to display format if needed
-                      const displayFormat = value.includes('/') 
-                        ? value.toUpperCase() 
-                        : value.length > 4 && value.toUpperCase().endsWith('USDT')
-                        ? `${value.slice(0, -4).toUpperCase()}/USDT`
-                        : `${value.toUpperCase()}/USDT`;
-                      setSymbol(displayFormat);
-                    } else if (!value) {
-                      setSymbol('');
-                    }
-                    if (!showSymbolDropdown && value) setShowSymbolDropdown(true);
-                  }}
-                  onFocus={() => {
-                    if (symbolSearch || symbol) setShowSymbolDropdown(true);
-                  }}
-                  placeholder="Search trading pair (e.g., BTC/USDT)..."
-                  className="symbol-input"
-                />
-                {livePrice && symbol && (
-                  <button
-                    type="button"
-                    className="live-price-badge"
-                    onClick={() => setOpenPrice(livePrice.toFixed(2))}
-                    title="Click to use as entry price"
-                  >
-                    {priceLoading ? (
-                      <span className="price-loading">...</span>
-                    ) : (
-                      <span className="price-value">${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
-                    )}
-                  </button>
-                )}
-                {showSymbolDropdown && (
-                  <div ref={dropdownRef} className="symbol-dropdown">
-                    {loadingPairs ? (
-                      <div className="dropdown-loading">Loading pairs...</div>
-                    ) : filteredPairs.length === 0 ? (
-                      <div className="dropdown-empty">No pairs found</div>
-                    ) : (
-                      filteredPairs.map((pair) => (
-                        <div
-                          key={pair.symbol}
-                          className="dropdown-item"
-                          onClick={() => handleSymbolSelect(pair)}
-                        >
-                          <span className="pair-symbol">{pair.displaySymbol}</span>
-                          <span className="pair-base">{pair.baseAsset}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="input-group-h">
-              <label>Date</label>
+      {/* Form */}
+      <div className="ps-form">
+
+        {/* Symbol + Date */}
+        <div className="ps-row">
+          <div className="ps-field ps-field--symbol symbol-input-group">
+            <label>Symbol</label>
+            <div className="symbol-input-wrapper">
+              <Search size={13} className="search-icon" />
               <input
-                type="date"
-                value={tradeDate}
-                onChange={(e) => setTradeDate(e.target.value)}
-                className="date-input"
+                ref={symbolInputRef}
+                type="text"
+                value={symbolSearch || symbol}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSymbolSearch(value);
+                  if (value && value.length >= 2) {
+                    const displayFormat = value.includes('/')
+                      ? value.toUpperCase()
+                      : value.length > 4 && value.toUpperCase().endsWith('USDT')
+                      ? `${value.slice(0, -4).toUpperCase()}/USDT`
+                      : `${value.toUpperCase()}/USDT`;
+                    setSymbol(displayFormat);
+                  } else if (!value) {
+                    setSymbol('');
+                  }
+                  if (!showSymbolDropdown && value) setShowSymbolDropdown(true);
+                }}
+                onFocus={() => {
+                  if (symbolSearch || symbol) setShowSymbolDropdown(true);
+                }}
+                placeholder="Search pair..."
+                className="symbol-input"
               />
+              {livePrice && symbol && (
+                <button
+                  type="button"
+                  className="live-price-badge"
+                  onClick={() => setOpenPrice(livePrice.toFixed(2))}
+                  title="Click to use as entry price"
+                >
+                  {priceLoading ? (
+                    <span className="price-loading">...</span>
+                  ) : (
+                    <span className="price-value">${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</span>
+                  )}
+                </button>
+              )}
+              {showSymbolDropdown && (
+                <div ref={dropdownRef} className="symbol-dropdown">
+                  {loadingPairs ? (
+                    <div className="dropdown-loading">Loading pairs...</div>
+                  ) : filteredPairs.length === 0 ? (
+                    <div className="dropdown-empty">No pairs found</div>
+                  ) : (
+                    filteredPairs.map((pair) => (
+                      <div
+                        key={pair.symbol}
+                        className="dropdown-item"
+                        onClick={() => handleSymbolSelect(pair)}
+                      >
+                        <span className="pair-symbol">{pair.displaySymbol}</span>
+                        <span className="pair-base">{pair.baseAsset}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
+          </div>
+          <div className="ps-field ps-field--date">
+            <label>Date</label>
+            <input
+              type="date"
+              value={tradeDate}
+              onChange={(e) => setTradeDate(e.target.value)}
+              className="date-input"
+            />
           </div>
         </div>
 
-        {/* Row 2 - Prices */}
-        <div className="form-section">
-          <h4 className="section-title">Price Levels</h4>
-          <div className="input-row-h">
-            <div className="input-group-h">
-              <label>Entry Price</label>
-              <input
-                type="number"
-                value={openPrice}
-                onChange={(e) => setOpenPrice(e.target.value)}
-                placeholder="0.00"
-                step="any"
-              />
-            </div>
-            <div className="input-group-h">
-              <label>Stop Loss</label>
-              <input
-                type="number"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                placeholder="0.00"
-                step="any"
-                className="input-danger"
-              />
-            </div>
-            <div className="input-group-h">
-              <label>Take Profit</label>
-              <input
-                type="number"
-                value={takeProfit}
-                onChange={(e) => setTakeProfit(e.target.value)}
-                placeholder="0.00"
-                step="any"
-                className="input-success"
-              />
-            </div>
+        {/* Price Levels */}
+        <div className="ps-section-label">Price Levels</div>
+        <div className="ps-row ps-row--3">
+          <div className="ps-field">
+            <label>Entry</label>
+            <input
+              type="number"
+              value={openPrice}
+              onChange={(e) => setOpenPrice(e.target.value)}
+              placeholder="0.00"
+              step="any"
+            />
+          </div>
+          <div className="ps-field">
+            <label>Stop Loss</label>
+            <input
+              type="number"
+              value={stopLoss}
+              onChange={(e) => setStopLoss(e.target.value)}
+              placeholder="0.00"
+              step="any"
+              className="input-danger"
+            />
+          </div>
+          <div className="ps-field">
+            <label>Take Profit</label>
+            <input
+              type="number"
+              value={takeProfit}
+              onChange={(e) => setTakeProfit(e.target.value)}
+              placeholder="0.00"
+              step="any"
+              className="input-success"
+            />
           </div>
         </div>
 
-        {/* Row 3 - Settings */}
-        <div className="form-section">
-          <h4 className="section-title">Settings</h4>
-          <div className="settings-row-h">
-            <div className="setting-group">
-              <label>Leverage</label>
-              <div className="button-group-h">
-                {[1, 2, 3, 5, 10, 20, 50, 100].map((lev) => (
-                  <button
-                    key={lev}
-                    className={`setting-btn ${leverage === lev ? 'active' : ''}`}
-                    onClick={() => setLeverage(lev)}
-                  >
-                    {lev}x
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="setting-group">
-              <label>Risk (R)</label>
-              <div className="button-group-h">
-                {[0.5, 1, 1.5, 2, 3].map((r) => (
-                  <button
-                    key={r}
-                    className={`setting-btn risk ${riskMultiple === r ? 'active' : ''}`}
-                    onClick={() => setRiskMultiple(r)}
-                  >
-                    {r}R
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* Leverage Slider */}
+        <div className="ps-slider-section">
+          <div className="slider-header">
+            <span className="slider-label">Leverage</span>
+            <span className="slider-value leverage-val">{leverage}x</span>
+          </div>
+          <input
+            type="range"
+            className="ps-slider"
+            min="0"
+            max={LEVERAGE_LEVELS.length - 1}
+            step="1"
+            value={leverageIndex}
+            onChange={(e) => setLeverage(LEVERAGE_LEVELS[parseInt(e.target.value)])}
+            style={{ '--progress': `${leverageProgress}%` }}
+          />
+          <div className="slider-ticks">
+            {LEVERAGE_LEVELS.map((l) => (
+              <span key={l} className={leverage === l ? 'active' : ''}>{l}x</span>
+            ))}
           </div>
         </div>
+
+        {/* Risk Slider */}
+        <div className="ps-slider-section">
+          <div className="slider-header">
+            <span className="slider-label">Risk Multiplier</span>
+            <span className="slider-value risk-val">{riskMultiple}R · ${(rValue * riskMultiple).toFixed(0)}</span>
+          </div>
+          <input
+            type="range"
+            className="ps-slider risk-slider"
+            min="0"
+            max={RISK_LEVELS.length - 1}
+            step="1"
+            value={riskIndex}
+            onChange={(e) => setRiskMultiple(RISK_LEVELS[parseInt(e.target.value)])}
+            style={{ '--progress': `${riskProgress}%` }}
+          />
+          <div className="slider-ticks">
+            {RISK_LEVELS.map((r) => (
+              <span key={r} className={riskMultiple === r ? 'active' : ''}>{r}R</span>
+            ))}
+          </div>
+        </div>
+
       </div>
 
-      {/* Results Section */}
-      <div className="results-section-h">
-        <div className="result-card main">
+      {/* Results */}
+      <div className="ps-results">
+        <div className="ps-result-main">
           <span className="result-label">Position Size</span>
-          <span className="result-value">
+          <span className="result-value-main">
             ${calculations.positionSize.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
-        
-        <div className="result-card">
-          <span className="result-label">Stop Loss</span>
-          <span className="result-value danger">
-            -{calculations.stopLossPercent.toFixed(2)}%
-          </span>
-          <span className="result-sub">${calculations.riskAmount.toFixed(2)}</span>
+        <div className="ps-result-row">
+          <div className="ps-result-item">
+            <span className="result-label">Stop Loss</span>
+            <span className="result-value danger">-{calculations.stopLossPercent.toFixed(2)}%</span>
+            <span className="result-sub">${calculations.riskAmount.toFixed(2)}</span>
+          </div>
+          <div className="ps-result-item">
+            <span className="result-label">Take Profit</span>
+            <span className="result-value success">+{calculations.takeProfitPercent.toFixed(2)}%</span>
+            <span className="result-sub">${calculations.potentialProfit.toFixed(2)}</span>
+          </div>
+          <div className="ps-result-item">
+            <span className="result-label">Risk / Reward</span>
+            <span className={`result-value ${calculations.riskRewardRatio >= 2 ? 'success' : calculations.riskRewardRatio >= 1 ? 'warning' : 'danger'}`}>
+              1:{calculations.riskRewardRatio.toFixed(2)}
+            </span>
+          </div>
         </div>
-        
-        <div className="result-card">
-          <span className="result-label">Take Profit</span>
-          <span className="result-value success">
-            +{calculations.takeProfitPercent.toFixed(2)}%
-          </span>
-          <span className="result-sub">${calculations.potentialProfit.toFixed(2)}</span>
-        </div>
-        
-        <div className="result-card">
-          <span className="result-label">Risk/Reward</span>
-          <span className={`result-value ${calculations.riskRewardRatio >= 2 ? 'success' : calculations.riskRewardRatio >= 1 ? 'warning' : 'danger'}`}>
-            1:{calculations.riskRewardRatio.toFixed(2)}
-          </span>
-        </div>
-
-        <button className="submit-btn" onClick={handleOpenTrade}>
-          <Zap size={18} />
-          <span>Open Trade</span>
+        <button className="ps-submit-btn" onClick={handleOpenTrade}>
+          <Zap size={16} />
+          Open Trade
         </button>
       </div>
     </div>

@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import PerformanceTearsheet from './PerformanceTearsheet';
 import { StatLineChart } from './StatCharts';
-import TradePositionChart from './TradePositionChart';
 import './TradingJournal.css';
 
 const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateTrade, initialBalance = 1000 }) => {
@@ -78,8 +77,8 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
   }, [hideDollars]);
 
   // Split trades
-  const openTrades = trades.filter(t => t.status === 'open');
-  const closedTrades = trades.filter(t => t.status === 'closed');
+  const openTrades = useMemo(() => trades.filter(t => t.status === 'open'), [trades]);
+  const closedTrades = useMemo(() => trades.filter(t => t.status === 'closed'), [trades]);
   
   // When closed trades load, set selectedMonth to the month of the most recent trade
   // so "Monthly" view shows a month that has data
@@ -423,37 +422,16 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
 
   return (
     <div className="trading-journal-enhanced glass-card">
-      {/* Header */}
-      <div className="journal-header">
-        <h2>
-          <BarChart3 size={24} />
-          Trading Dashboard
-        </h2>
-        <div className="header-controls">
-          <div className="r-info">
-            <span className="r-label">1R =</span>
-            <span className="r-value">{hideDollars ? `${rValue.toFixed(2)}R` : `$${rValue}`}</span>
-          </div>
-          <button 
-            className="toggle-dollars-btn"
-            onClick={() => setHideDollars(!hideDollars)}
-            title={hideDollars ? "Show dollar amounts" : "Hide dollar amounts (show only % and R)"}
-          >
-            {hideDollars ? '%' : '$'}
-          </button>
-        </div>
-      </div>
-
       {/* Main Tabs */}
       <div className="main-tabs">
-        <button 
+        <button
           className={`main-tab ${mainTab === 'stats' ? 'active' : ''}`}
           onClick={() => setMainTab('stats')}
         >
           <TrendingUp size={16} />
           Statistics
         </button>
-        <button 
+        <button
           className={`main-tab ${mainTab === 'active' ? 'active' : ''}`}
           onClick={() => setMainTab('active')}
         >
@@ -463,7 +441,7 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
             <span className="tab-count">{openTrades.length}</span>
           )}
         </button>
-        <button 
+        <button
           className={`main-tab ${mainTab === 'trades' ? 'active' : ''}`}
           onClick={() => setMainTab('trades')}
         >
@@ -471,6 +449,19 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
           Trade History
           <span className="tab-count-muted">{closedTrades.length}</span>
         </button>
+        <div className="tabs-right-controls">
+          <div className="r-info">
+            <span className="r-label">1R =</span>
+            <span className="r-value">{hideDollars ? `${rValue.toFixed(2)}R` : `$${rValue}`}</span>
+          </div>
+          <button
+            className="toggle-dollars-btn"
+            onClick={() => setHideDollars(!hideDollars)}
+            title={hideDollars ? "Show dollar amounts" : "Hide dollar amounts (show only % and R)"}
+          >
+            {hideDollars ? '%' : '$'}
+          </button>
+        </div>
       </div>
 
       {/* Active Trades Tab */}
@@ -501,17 +492,6 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                     </div>
 
                     <div className="trade-card-body">
-                      <div className="trade-chart-container">
-                        <TradePositionChart
-                          symbol={trade.symbol}
-                          entryPrice={trade.openPrice}
-                          stopLoss={trade.stopLoss}
-                          takeProfit={trade.takeProfit}
-                          type={trade.type}
-                          height={380}
-                        />
-                      </div>
-                      
                       <div className="trade-price-row">
                         <div className="price-item">
                           <span className="price-label">Entry</span>

@@ -1,10 +1,7 @@
 .price-chart-container {
-  border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 14px 16px 12px;
   position: relative;
-  background: linear-gradient(145deg, #0c1524 0%, #080e1a 50%, #03060c 100%);
-  border: 1px solid rgba(34, 211, 238, 0.18);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(186, 230, 253, 0.03);
+  /* No own background/border — inherits from glass-card wrapper */
 }
 
 .price-chart-container.loading,
@@ -12,30 +9,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .chart-loading,
 .chart-empty {
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
 }
 
 .price-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .price-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .price-label {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
   font-weight: 600;
@@ -44,7 +41,7 @@
 
 .price-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -59,19 +56,19 @@
 .price-change {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
-  font-weight: 600;
-  padding: 4px 8px;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
 }
 
 .price-change.up {
   color: #10b981;
-  background: rgba(45, 212, 191, 0.12);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .price-change.down {
   color: #ef4444;
-  background: rgba(244, 63, 94, 0.12);
+  background: rgba(244, 63, 94, 0.1);
 }
 
 .price-chart-canvas {

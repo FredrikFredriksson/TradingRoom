@@ -3,6 +3,7 @@ import { LayoutDashboard, Zap } from 'lucide-react';
 import Header from './components/Header';
 import PositionSizer from './components/PositionSizer';
 import ActiveTrades from './components/ActiveTrades';
+import PriceChart from './components/PriceChart';
 import TradingJournal from './components/TradingJournal';
 import { useUnrealizedPnL } from './hooks/useUnrealizedPnL';
 import { getDemoState } from './data/demoData';
@@ -14,6 +15,7 @@ function App() {
   const [balance, setBalance] = useState(demoState.account.currentBalance);
   const [trades, setTrades] = useState(demoState.trades);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentSymbol, setCurrentSymbol] = useState('BTC/USDT');
 
   const openTrades = useMemo(
     () => trades.filter((trade) => trade.status === 'open'),
@@ -107,7 +109,6 @@ function App() {
 
       <div className="app-container">
         <Header
-          title={demoState.account.title}
           subtitle={demoState.account.subtitle}
           balance={displayedBalance}
           rValue={rValue}
@@ -154,16 +155,23 @@ function App() {
 
           {activeTab === 'trade' && (
             <div className="trade-layout animate-fadeIn">
-              <div className="trade-layout-place">
-                <PositionSizer rValue={rValue} onNewTrade={handleNewTrade} />
+              <div className="trade-left-panel">
+                <PositionSizer
+                  rValue={rValue}
+                  onNewTrade={handleNewTrade}
+                  onSymbolChange={setCurrentSymbol}
+                />
               </div>
-              <aside className="trade-layout-active">
+              <div className="trade-right-panel">
+                <div className="chart-panel glass-card">
+                  <PriceChart symbol={currentSymbol} height={185} />
+                </div>
                 <ActiveTrades
                   trades={trades}
                   onCloseTrade={handleCloseTrade}
                   onDeleteTrade={handleDeleteTrade}
                 />
-              </aside>
+              </div>
             </div>
           )}
         </main>

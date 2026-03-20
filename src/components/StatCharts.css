@@ -23,7 +23,7 @@
 }
 
 .stat-chart-dot {
-  stroke: rgba(5, 10, 18, 0.9);
+  stroke: var(--bg-primary);
   stroke-width: 2;
 }
 
@@ -57,8 +57,8 @@
 .stat-chart-metric {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(15, 26, 46, 0.72);
-  border: 1px solid rgba(34, 211, 238, 0.12);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
 }
 
 .stat-chart-metric-label {

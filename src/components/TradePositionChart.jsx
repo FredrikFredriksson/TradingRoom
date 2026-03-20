@@ -126,7 +126,7 @@ const TradePositionChart = ({
             <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 211, 238, 0.1)" />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" />
         <XAxis 
           dataKey="timestamp"
           stroke="var(--text-muted)"

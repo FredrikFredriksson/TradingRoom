@@ -2,7 +2,6 @@ import demoMark from '../assets/tradingroom-mark.svg';
 import './Header.css';
 
 const Header = ({
-  title,
   subtitle,
   closedTrades,
   openTrades,
@@ -55,18 +54,17 @@ const Header = ({
           <div className="brand-text">
             <div className="brand-row">
               <h1>TradingRoom</h1>
-              <span className="version">{title}</span>
+              <span className="demo-pill">Public Demo</span>
             </div>
             <p>{subtitle}</p>
           </div>
         </div>
       </div>
 
-      <div className="header-controls">
-        <div className="demo-pill">Public Demo Dataset</div>
+      <div className="header-stats">
         <div className="summary-grid">
           {summaryCards.map((card) => (
-            <div key={card.label} className={`summary-card ${card.tone}`}>
+            <div key={card.label} className="summary-card">
               <span className="summary-label">{card.label}</span>
               <strong className="summary-value">{card.value}</strong>
               <span className="summary-meta">{card.meta}</span>

@@ -285,6 +285,29 @@ export default function PerformanceTearsheet({ closedTrades = [], initialBalance
             </table>
           </div>
 
+          <div className="tearsheet-chart">
+            <h5>Return distribution</h5>
+            <div className="stat-chart-meta">
+              <div className="stat-chart-metric">
+                <span className="stat-chart-metric-label">Best Trade</span>
+                <span className="stat-chart-metric-value positive">
+                  {formatSignedPercent(bestReturn)}
+                </span>
+              </div>
+              <div className="stat-chart-metric">
+                <span className="stat-chart-metric-label">Worst Trade</span>
+                <span className="stat-chart-metric-value negative">
+                  {formatSignedPercent(worstReturn)}
+                </span>
+              </div>
+              <div className="stat-chart-metric">
+                <span className="stat-chart-metric-label">Buckets</span>
+                <span className="stat-chart-metric-value">{histogramData.length}</span>
+              </div>
+            </div>
+            <StatHistogramChart data={histogramData} valueKey="count" labelKey="label" height={200} />
+          </div>
+
           <div className="heatmap-wrap">
             <h5>Monthly returns heatmap</h5>
             <div className="heatmap-scroll">
@@ -410,28 +433,6 @@ export default function PerformanceTearsheet({ closedTrades = [], initialBalance
             />
           </div>
 
-          <div className="tearsheet-chart">
-            <h5>Return distribution</h5>
-            <div className="stat-chart-meta">
-              <div className="stat-chart-metric">
-                <span className="stat-chart-metric-label">Best Trade</span>
-                <span className="stat-chart-metric-value positive">
-                  {formatSignedPercent(bestReturn)}
-                </span>
-              </div>
-              <div className="stat-chart-metric">
-                <span className="stat-chart-metric-label">Worst Trade</span>
-                <span className="stat-chart-metric-value negative">
-                  {formatSignedPercent(worstReturn)}
-                </span>
-              </div>
-              <div className="stat-chart-metric">
-                <span className="stat-chart-metric-label">Buckets</span>
-                <span className="stat-chart-metric-value">{histogramData.length}</span>
-              </div>
-            </div>
-            <StatHistogramChart data={histogramData} valueKey="count" labelKey="label" height={200} />
-          </div>
         </div>
       </div>
     </div>
