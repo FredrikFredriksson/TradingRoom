@@ -156,7 +156,7 @@
 .ps-field input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.12);
+  box-shadow: 0 0 0 2px rgba(211, 79, 63, 0.12);
 }
 
 .ps-field input::placeholder {
@@ -256,17 +256,17 @@
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  background: rgba(46, 196, 182, 0.08);
+  background: rgba(211, 79, 63, 0.08);
   padding: 3px 6px;
   border-radius: var(--radius-xs);
-  border: 1px solid rgba(46, 196, 182, 0.2);
+  border: 1px solid rgba(211, 79, 63, 0.2);
   cursor: pointer;
   font: inherit;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .live-price-badge:hover {
-  background: rgba(46, 196, 182, 0.15);
+  background: rgba(211, 79, 63, 0.15);
   border-color: var(--accent-primary);
 }
 
@@ -352,12 +352,12 @@
   background: var(--accent-primary);
   cursor: pointer;
   border: 2px solid var(--bg-primary);
-  box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.3);
+  box-shadow: 0 0 0 2px rgba(211, 79, 63, 0.3);
   transition: box-shadow 0.15s;
 }
 
 .ps-slider::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.2);
+  box-shadow: 0 0 0 4px rgba(211, 79, 63, 0.2);
 }
 
 .ps-slider.risk-slider::-webkit-slider-thumb {
@@ -505,7 +505,7 @@
 
 .ps-submit-btn:hover {
   background: var(--accent-secondary);
-  box-shadow: 0 4px 16px rgba(46, 196, 182, 0.25);
+  box-shadow: 0 4px 16px rgba(211, 79, 63, 0.25);
   transform: translateY(-1px);
 }
 

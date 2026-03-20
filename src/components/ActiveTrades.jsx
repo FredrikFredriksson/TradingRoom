@@ -131,7 +131,7 @@ const TradeCard = ({
             )}
           </div>
 
-          <div className="tc-level pnl-level">
+          <div className={`tc-level pnl-level${isUp === true ? ' pnl-up' : isUp === false ? ' pnl-down' : ''}`}>
             <span className="tc-level-label">Unrealized P&amp;L</span>
             {unrealized ? (
               <>

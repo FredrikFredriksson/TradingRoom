@@ -392,7 +392,7 @@ export default function PerformanceTearsheet({ closedTrades = [], initialBalance
               data={equityData}
               valueKey="value"
               labelKey="dateLabel"
-              color="var(--accent-primary)"
+              color={latestEquity >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}
               area
               height={220}
               includeZero

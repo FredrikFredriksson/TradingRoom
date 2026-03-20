@@ -19,9 +19,9 @@
   --bg-elevated: #1c1c22;
   --bg-hover: #232329;
 
-  /* Accent - Teal */
-  --accent-primary: #2EC4B6;
-  --accent-secondary: #25a99d;
+  /* Accent - Red */
+  --accent-primary: #D34F3F;
+  --accent-secondary: #120807;
   --accent-emerald: #34d399;
   --accent-amber: #fbbf24;
 
@@ -37,7 +37,7 @@
 
   /* Semantic */
   --color-warning: #fbbf24;
-  --color-info: #2EC4B6;
+  --color-info: #D34F3F;
 
   /* Text Colors - neutral */
   --text-primary: #f4f4f5;
@@ -119,7 +119,7 @@ input[type=number] {
 
 /* Selection */
 ::selection {
-  background: rgba(46, 196, 182, 0.3);
+  background: rgba(211, 79, 63, 0.3);
   color: var(--text-primary);
 }
 

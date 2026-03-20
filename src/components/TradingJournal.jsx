@@ -929,7 +929,11 @@ const TradingJournal = ({ trades, rValue, onDeleteTrade, onCloseTrade, onUpdateT
                   data={chartData}
                   valueKey="balance"
                   labelKey="dateLabel"
-                  color="var(--accent-primary)"
+                  color={
+                    chartData[chartData.length - 1].balance >= chartData[0].balance
+                      ? 'var(--color-success)'
+                      : 'var(--color-danger)'
+                  }
                   area
                   height={300}
                 />
